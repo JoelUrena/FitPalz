@@ -1,24 +1,34 @@
-//
-//  ContentView.swift
-//  Fitpalzsz
-//
-//  Created by Naomi Talukder on 3/24/25.
-//
-
 import SwiftUI
+import UIKit
 
+
+// dummy page (use zayns code later)
 struct ContentView: View {
-    var body: some View {
-        VStack {
-            Image(systemName: "globe")
-                .imageScale(.large)
-                .foregroundStyle(.tint)
-            Text("Hello, world!")
-        }
-        .padding()
-    }
-}
+    @State private var isLoggedIn = false
 
-#Preview {
-    ContentView()
+    var body: some View {
+        if isLoggedIn {
+            MainTabView()
+        } else {
+            VStack(spacing: 20) {
+                Text("Welcome to HealthBuddy")
+                    .font(.largeTitle)
+                    .bold()
+                    .padding(.top, 100)
+
+                Button("Log In") {
+                    isLoggedIn = true
+                }
+                .padding()
+                .frame(width: 200)
+                .background(Color.blue)
+                .foregroundColor(.white)
+                .cornerRadius(10)
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(Color.black) // or Color.black for dark theme
+
+
+        }
+    }
 }

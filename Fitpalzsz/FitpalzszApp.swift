@@ -13,5 +13,5 @@ struct FitpalzszApp: App {
         WindowGroup {
             ContentView()
         }
-    }
+    }  
 }
