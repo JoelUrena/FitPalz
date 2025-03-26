@@ -2,29 +2,29 @@
 //  ContentView.swift
 //  test
 
-import SwiftUI
+mport SwiftUI
 import Firebase
+import FirebaseCore
 import FirebaseAuth
+import GoogleSignIn
 
-//LOGIN PAGE
+// LOGIN PAGE
 struct ContentView: View {
     @State private var email = ""
     @State private var password = ""
-    //    @State private var errorMessage: String?
     @State private var userIsLoggedIn = false
-    
+    @State private var errorMessage: String?
     
     var body: some View {
         if userIsLoggedIn {
-            ListView()
+            ListView() // Navigate to the next screen
         } else {
             content
         }
-        
     }
     
     var content: some View {
-        NavigationStack {
+        NavigationView {
             VStack {
                 Image("logo")
                     .resizable()
@@ -40,9 +40,9 @@ struct ContentView: View {
                 // Email TextField
                 TextField("Email", text: $email)
                     .padding()
-                    .textFieldStyle(.plain) // Removes default styling
+                    .textFieldStyle(.plain)
                     .background(Color(red: 0.1, green: 0.1, blue: 0.1))
-                    .foregroundColor(.white) // Set the text color to white for the entered text
+                    .foregroundColor(.white)
                     .border(Color(red: 123/255, green: 106/255, blue: 244/255), width: 0.6)
                     .cornerRadius(2)
                     .padding(.bottom, 8)
@@ -59,7 +59,6 @@ struct ContentView: View {
                     .padding(.bottom, 15)
                     .offset(y: -30)
                 
-                
                 // Sign In Button
                 Button("Sign In") {
                     login()
@@ -73,7 +72,7 @@ struct ContentView: View {
                 
                 // Google Sign-In Button
                 Button("Sign In with Google") {
-                    
+                    googleSignIn()
                 }
                 .padding()
                 .frame(maxWidth: .infinity)
@@ -85,7 +84,7 @@ struct ContentView: View {
                 .offset(y: -128)
                 
                 // Sign Up Button
-                NavigationLink(destination: SignUpView()) { // NavigationLink now works because it's wrapped in NavigationStack
+                NavigationLink(destination: SignUpView()) {
                     Text("Don't have an account? Sign Up!")
                         .padding()
                         .font(.system(size: 17, weight: .bold))
@@ -93,156 +92,174 @@ struct ContentView: View {
                         .frame(maxWidth: .infinity)
                         .foregroundColor(.blue)
                         .cornerRadius(10)
-                        .offset(y: -190)
+                        .offset(y: -199)
                 }
                 
                 .padding(.horizontal, 20)
                 Spacer()
-                    .frame(width: 350)
-                    .onAppear {
-                        Auth.auth().addStateDidChangeListener { auth, user in
-                            if user != nil {
-                                userIsLoggedIn.toggle()
-                            }
+                .frame(width: 350)
+                
+                .onAppear {
+                    Auth.auth().addStateDidChangeListener { auth, user in
+                        if user != nil {
+                            userIsLoggedIn.toggle()
                         }
                     }
-                
-            }
+                }
+}
             .background(Color.black)
             .edgesIgnoringSafeArea(.all) // Make the background cover the entire screen
         }
     }
     
     func login() {
-        Auth.auth().signIn(withEmail: email, password: password) { result, error in
-            if error != nil {
-                print(error!.localizedDescription)
-            }
-        }
-    }
-    
-    //SIGNUP PAGE
-    struct SignUpView: View {
-        @State private var firstName = ""
-        @State private var lastName = ""
-        @State private var email = ""
-        @State private var password = ""
-        @State private var confirmPassword = ""
-        @State private var errorMessage: String?
-        
-        var body: some View {
-            ZStack {
-                Color.black // background color to black
-                
-                VStack {
-                    Image("logo")
-                        .resizable()
-                        .scaledToFit()
-                        .frame(width: 330, height: 330)
-                        .padding(.top, -255)
-                    
-                    Text("Sign Up")
-                        .foregroundColor(.white)
-                        .offset(y: -35)
-                        .font(.system(size: 31, weight: .bold))
-                    
-                    // Sign-up form UI elements
-                    //                TextField("First Name", text: $firstName)
-                    //                    .padding()
-                    //                    .background(Color.gray.opacity(0.2))
-                    //                    .border(Color(red: 123/255, green: 106/255, blue: 244/255), width: 0.6)
-                    //                    .cornerRadius(2)
-                    //                    .padding(.bottom, 8)
-                    //
-                    //                TextField("Last Name", text: $lastName)
-                    //                    .padding()
-                    //                    .background(Color.gray.opacity(0.2))
-                    //                    .border(Color(red: 123/255, green: 106/255, blue: 244/255), width: 0.6)
-                    //                    .cornerRadius(2)
-                    //                    .padding(.bottom, 8)
-                    
-                    TextField("New Email", text: $email)
-                        .padding()
-                        .background(Color.gray.opacity(0.2))
-                        .border(Color(red: 123/255, green: 106/255, blue: 244/255), width: 0.6)
-                        .cornerRadius(2)
-                        .padding(.bottom, 8)
-                    
-                    SecureField("New Password", text: $password)
-                        .padding()
-                        .background(Color.gray.opacity(0.2))
-                        .border(Color(red: 123/255, green: 106/255, blue: 244/255), width: 0.6)
-                        .cornerRadius(2)
-                        .padding(.bottom, 8)
-                    
-                    //                SecureField("Confirm Password", text: $confirmPassword)
-                    //                    .padding()
-                    //                    .background(Color.gray.opacity(0.2))
-                    //                    .border(Color(red: 123/255, green: 106/255, blue: 244/255), width: 0.6)
-                    //                    .cornerRadius(2)
-                    //                    .padding(.bottom, 8)
-                    
-                    // Display error message if any
-                    if let errorMessage = errorMessage {
-                        Text(errorMessage)
-                            .foregroundColor(.red)
-                            .padding(.bottom, 15)
-                    }
-                    
-                    Button("Sign Up") {
-                        signUp()
-                    }
-                    .padding()
-                    .frame(maxWidth: .infinity)
-                    .background(Color(red: 0.48, green: 0.41, blue: 0.95))
-                    .foregroundColor(.white)
-                    .cornerRadius(10)
-                    .padding(.horizontal, 115)
-                    .offset(y: 45)
-                }
-                .padding()
-                .foregroundColor(.white)  // Set the text color to white for contrast
-            }
-            .edgesIgnoringSafeArea(.all)  // Ensures the background covers the entire screen
-            .navigationBarTitle("Sign Up", displayMode: .inline)
-        }
-        
-        func signUp() {
-            guard password == confirmPassword else {
-                errorMessage = "Passwords do not match."
-                return
-            }
-            
-            Auth.auth().createUser(withEmail: email, password: password) { result, error in
+            Auth.auth().signIn(withEmail: email, password: password) { result, error in
                 if let error = error {
                     errorMessage = error.localizedDescription
                     return
                 }
-                
-                let changeRequest = Auth.auth().currentUser?.createProfileChangeRequest()
-                changeRequest?.displayName = "\(firstName) \(lastName)"
-                changeRequest?.commitChanges { error in
-                    if let error = error {
-                        print("Error saving name: \(error.localizedDescription)")
-                    } else {
-                        print("Name saved successfully!")
-                    }
+
+                // Handle successful login
+                userIsLoggedIn = true  // Update login state
+                print("User logged in successfully")
+            }
+        }
+    
+    func googleSignIn() {
+        guard let clientID = FirebaseApp.app()?.options.clientID else { return }
+        
+        // Create Google Sign In configuration object
+        let config = GIDConfiguration(clientID: clientID)
+        GIDSignIn.sharedInstance.configuration = config
+        
+        // Start the sign-in flow
+        GIDSignIn.sharedInstance.signIn(withPresenting: UIApplication.shared.windows.first!.rootViewController!) { result, error in
+            guard error == nil else {
+                print("Google Sign-In error: \(error!.localizedDescription)")
+                return
+            }
+            
+            guard let user = result?.user,
+                  let idToken = user.idToken?.tokenString else {
+                return
+            }
+            
+            let credential = GoogleAuthProvider.credential(withIDToken: idToken, accessToken: user.accessToken.tokenString)
+            
+            // Sign in with Firebase
+            Auth.auth().signIn(with: credential) { result, error in
+                if let error = error {
+                    print("Firebase Sign-In error: \(error.localizedDescription)")
+                    return
                 }
                 
-                print("User signed up successfully.")
+                userIsLoggedIn = true
+                print("User signed in with Google successfully")
             }
         }
     }
+}
+
+// SIGNUP PAGE
+struct SignUpView: View {
+    @State private var firstName = ""
+    @State private var lastName = ""
+    @State private var email = ""
+    @State private var password = ""
+    @State private var confirmPassword = ""
+    @State private var errorMessage: String?
     
-    struct ContentView_Previews: PreviewProvider {
-        static var previews: some View {
-            Group {
-                // Preview for ContentView (Login View)
-                ContentView()
+    var body: some View {
+        ZStack {
+            Color.black // background color to black
+            
+            VStack {
+                Image("logo")
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 330, height: 330)
+                    .padding(.top, -255)
                 
-                // Preview for SignUpView (Sign Up View)
-                SignUpView()
+                Text("Sign Up")
+                    .foregroundColor(.white)
+                    .offset(y: -35)
+                    .font(.system(size: 31, weight: .bold))
+                
+                // Sign-up form UI elements
+                TextField("New Email", text: $email)
+                    .padding()
+                    .background(Color.gray.opacity(0.2))
+                    .border(Color(red: 123/255, green: 106/255, blue: 244/255), width: 0.6)
+                    .cornerRadius(2)
+                    .padding(.bottom, 8)
+                
+                SecureField("New Password", text: $password)
+                    .padding()
+                    .background(Color.gray.opacity(0.2))
+                    .border(Color(red: 123/255, green: 106/255, blue: 244/255), width: 0.6)
+                    .cornerRadius(2)
+                    .padding(.bottom, 8)
+                
+                // Display error message if any
+                if let errorMessage = errorMessage {
+                    Text(errorMessage)
+                        .foregroundColor(.red)
+                        .padding(.bottom, 15)
+                }
+                
+                Button("Sign Up") {
+                    signUp()
+                }
+                .padding()
+                .frame(maxWidth: .infinity)
+                .background(Color(red: 0.48, green: 0.41, blue: 0.95))
+                .foregroundColor(.white)
+                .cornerRadius(10)
+                .padding(.horizontal, 115)
+                .offset(y: 45)
             }
+            .padding()
+            .foregroundColor(.white) // Set the text color to white for contrast
+        }
+        .edgesIgnoringSafeArea(.all)  // Ensures the background covers the entire screen
+        .navigationBarTitle("Sign Up", displayMode: .inline)
+    }
+    
+    func signUp() {
+        guard password == confirmPassword else {
+            errorMessage = "Passwords do not match."
+            return
+        }
+        
+        Auth.auth().createUser(withEmail: email, password: password) { result, error in
+            if let error = error {
+                errorMessage = error.localizedDescription
+                return
+            }
+            
+            let changeRequest = Auth.auth().currentUser?.createProfileChangeRequest()
+            changeRequest?.displayName = "\(firstName) \(lastName)"
+            changeRequest?.commitChanges { error in
+                if let error = error {
+                    print("Error saving name: \(error.localizedDescription)")
+                } else {
+                    print("Name saved successfully!")
+                }
+            }
+            
+            print("User signed up successfully.")
+        }
+    }
+}
+
+struct ContentView_Previews: PreviewProvider {
+    static var previews: some View {
+        Group {
+            // Preview for ContentView (Login)
+            ContentView()
+            
+            // Preview for SignUpView
+            SignUpView()
         }
     }
 }
