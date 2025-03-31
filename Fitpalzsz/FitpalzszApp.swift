@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import HealthKit
 import Firebase
 import FirebaseCore
 import FirebaseAuth
@@ -28,7 +29,19 @@ struct FitpalzszApp: App {
       return GIDSignIn.sharedInstance.handle(url)
     }
     
+    private let healthStore: HKHealthStore
+    
     init() {
+        
+        //make sure that there is actual data in this thing
+        guard HKHealthStore.isHealthDataAvailable() else {
+            
+            fatalError("no health data available")
+            
+        }
+        
+        healthStore = HKHealthStore()
+        requestHealthKitAccess()
         
         @UIApplicationDelegateAdaptor(AppDelegate.self) var delegate
         
@@ -44,6 +57,17 @@ struct FitpalzszApp: App {
            UITabBar.appearance().tintColor = UIColor.white
            UITabBar.appearance().unselectedItemTintColor = UIColor.gray
        }
+    
+    private func requestHealthKitAccess() {
+        
+        let samples = Set([HKObjectType.quantityType(forIdentifier: .stepCount)!,HKObjectType.quantityType(forIdentifier: .distanceWalkingRunning)!,HKObjectType.quantityType(forIdentifier:  .activeEnergyBurned)!])
+        
+        healthStore.requestAuthorization(toShare: nil, read: samples) { success, error in
+            print("Request Authorization -- Success: ", success, " Error: ", error ?? "nil")
+        }
+        
+    }
+    
     var body: some Scene {
         WindowGroup {
             ContentView()
