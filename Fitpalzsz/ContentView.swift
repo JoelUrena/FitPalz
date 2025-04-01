@@ -225,7 +225,7 @@ struct ContentView: View {
     var content: some View {
         NavigationStack {
             VStack {
-                Image("logo")
+                Image("fitpalz_logo")
                     .resizable()
                     .scaledToFit()
                     .frame(width: 330, height: 330)
@@ -239,22 +239,28 @@ struct ContentView: View {
                 // Email TextField
                 TextField("Email", text: $email)
                     .padding()
-                    .textFieldStyle(.plain)
-                    .background(Color(red: 0.1, green: 0.1, blue: 0.1))
+                    .textFieldStyle(PlainTextFieldStyle())
+                    .background(Color(red: 0.15, green: 0.15, blue: 0.15))
                     .foregroundColor(.white)
-                    .border(Color(red: 123/255, green: 106/255, blue: 244/255), width: 0.6)
-                    .cornerRadius(2)
-                    .padding(.bottom, 8)
-                    .offset(y: -35)
+                    .cornerRadius(40)
+                    .overlay(
+                         RoundedRectangle(cornerRadius: 40)
+                             .strokeBorder(Color(hex: "7b6af4"), lineWidth: 2)
+                    )
+                    .padding(.bottom, 15)
+                    .offset(y: -30)
                 
                 // Password SecureField
                 SecureField("Password", text: $password)
                     .padding()
                     .textFieldStyle(PlainTextFieldStyle())
-                    .background(Color(red: 0.1, green: 0.1, blue: 0.1))
-                    .foregroundColor(.blue)
-                    .border(Color(red: 123/255, green: 106/255, blue: 244/255), width: 0.6)
-                    .cornerRadius(2)
+                    .background(Color(red: 0.15, green: 0.15, blue: 0.15))
+                    .foregroundColor(.white)
+                    .cornerRadius(40)
+                    .overlay(
+                         RoundedRectangle(cornerRadius: 40)
+                             .strokeBorder(Color(hex: "7b6af4"), lineWidth: 2)
+                    )
                     .padding(.bottom, 15)
                     .offset(y: -30)
                 
@@ -275,10 +281,10 @@ struct ContentView: View {
                 }
                 .padding()
                 .frame(maxWidth: .infinity)
-                .background(Color(red: 0.48, green: 0.41, blue: 0.95))
+                .background(Color(hex: "7b6af4"))
                 .foregroundColor(.white)
-                .border(Color.gray, width: 2)
-                .cornerRadius(4)
+                //.border(Color.gray, width: 2)
+                .cornerRadius(40)
                 .padding(100)
                 .offset(y: -128)
                 
@@ -307,7 +313,7 @@ struct ContentView: View {
                     }
                 }
 }
-            .background(Color.black)
+            .background(Color(hex: "191919"))
             .edgesIgnoringSafeArea(.all) // Make the background cover the entire screen
         }
     }
