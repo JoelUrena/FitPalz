@@ -1,6 +1,31 @@
 import SwiftUI
 import FirebaseAuth
 
+extension Color {
+    init(hex: String) {
+        let hex = hex.trimmingCharacters(in: CharacterSet.alphanumerics.inverted)
+        var int: UInt64 = 0
+        Scanner(string: hex).scanHexInt64(&int)
+        
+        let r, g, b: UInt64
+        (r, g, b) = (
+            (int >> 16) & 0xFF,
+            (int >> 8) & 0xFF,
+            int & 0xFF
+        )
+        
+        self.init(
+            .sRGB,
+            red: Double(r) / 255,
+            green: Double(g) / 255,
+            blue: Double(b) / 255,
+            opacity: 1
+        )
+    }
+}
+
+
+
 struct HomeView: View {
     @State private var expandedStat: String? = nil
     @State private var isPulsing = false
@@ -26,10 +51,10 @@ struct HomeView: View {
             ScrollView {
                 VStack(spacing: 20) {
                     
-                    Image("logo")
+                    Image("fitpalz_logo")
                         .resizable()
                         .scaledToFit()
-                        .frame(height: 180)
+                        .frame(height: 300)
                         .padding(.top, 30)
 
                     Text("Welcome Back!")
@@ -55,11 +80,11 @@ struct HomeView: View {
                             HStack {
                                 Image(systemName: stat.icon)
                                     .font(.title)
-                                    .foregroundColor(.purple)
+                                    .foregroundColor(.white)
                                     .scaleEffect(isPulsing ? 1.1 : 1.0) // Pulse effect
                                     .animation(.easeInOut(duration: 1).repeatForever(autoreverses: true), value: isPulsing)
                                     .frame(width: 50, height: 50)
-                                    .background(Color.black)
+                                    .background(Color(hex: "7b6af4"))
                                     .clipShape(Circle())
                                 
 
@@ -80,7 +105,7 @@ struct HomeView: View {
                             }
                         }
                         .padding()
-                        .background(expandedStat == stat.label ? Color.purple : Color.black.opacity(0.7))
+                        .background(expandedStat == stat.label ? Color.purple : Color.black.opacity(0.3))
                         .cornerRadius(12)
                         .scaleEffect(expandedStat == stat.label ? 1.03 : 1.0)
                         .animation(.spring(), value: expandedStat)
@@ -99,7 +124,7 @@ struct HomeView: View {
                     isPulsing = true
                 }
             
-        }.background(Color.black.edgesIgnoringSafeArea(.all))
+        }.background(Color(hex: "19191919").edgesIgnoringSafeArea(.all))
         
         }.task {
             
