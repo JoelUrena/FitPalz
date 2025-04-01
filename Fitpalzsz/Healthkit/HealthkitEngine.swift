@@ -133,6 +133,22 @@ class HealthkitEngine: ObservableObject {
             self.healthStore.execute(query)
     }
     
+    //sets data for the stat item depending on what type it is
+    func getData(forType: statType) -> String {
+        switch forType {
+        case .distance:
+            return "\(String(format: "%.2f", walkingRunningDistance)) Miles"
+            
+        case .caloriesBurned:
+            return "\(String(format: "%.2f", caloriesBurned)) KCal"
+            
+        case .stepCount:
+            return "\(String(stepCount)) Steps"
+        default:
+            return "0.00"
+        }
+    }
+    
     
 }
 

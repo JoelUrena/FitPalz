@@ -5,15 +5,17 @@ struct HomeView: View {
     @State private var expandedStat: String? = nil
     @State private var isPulsing = false
     @State private var userIsLoggedIn = false
+    @State private var stepCount = 0
+    @StateObject var healthkitEngine = HealthkitEngine.shared
     
     let contentView = ContentView()
 
     let statsData: [StatItem] = [
-        StatItem(label: "Calories Burned", value: "1200", icon: "flame.fill", details: "You burned 1200 kcal today! Keep up the good work!"),
-        StatItem(label: "Steps Taken", value: "10,500", icon: "figure.walk.motion", details: "You’ve taken 10,500 steps! That’s an amazing effort!"),
-        StatItem(label: "Distance", value: "7.2 miles", icon: "shoeprints.fill", details: "You covered 7.2 miles today. Stay active!"),
-        StatItem(label: "Challenges", value: "30% complete", icon: "trophy", details: "You’ve completed 30% of your challenges. Keep pushing forward!"),
-        StatItem(label: "Sleep", value: "40 hours", icon: "bed.double.fill", details: "You’ve accumulated 40 hours of sleep this week. Aim for consistency!")
+        StatItem(label: "Calories Burned", value: "", icon: "flame.fill", details: "You burned 0.0 kcal today! Keep up the good work!", type: statType.caloriesBurned),
+        StatItem(label: "Steps Taken", value: "", icon: "figure.walk.motion", details: "You’ve taken 0.0 steps! That’s an amazing effort!",type: statType.stepCount),
+        StatItem(label: "Distance", value: "7.2 miles", icon: "shoeprints.fill", details: "You covered 0.0 miles today. Stay active!",type: statType.distance),
+        StatItem(label: "Challenges", value: "30% complete", icon: "trophy", details: "You’ve completed 30% of your challenges. Keep pushing forward!", type: .none),
+        StatItem(label: "Sleep", value: "40 hours", icon: "bed.double.fill", details: "You’ve accumulated 40 hours of sleep this week. Aim for consistency!", type: .none)
        
     ]
 
@@ -59,8 +61,9 @@ struct HomeView: View {
                                     .frame(width: 50, height: 50)
                                     .background(Color.black)
                                     .clipShape(Circle())
+                                
 
-                                Text("\(stat.label): \(stat.value)")
+                                Text("\(stat.label): \(healthkitEngine.getData(forType: stat.type))")
                                     .foregroundColor(.white)
                                     .font(.headline)
 
@@ -98,10 +101,21 @@ struct HomeView: View {
             
         }.background(Color.black.edgesIgnoringSafeArea(.all))
         
+        }.task {
+            
+            healthkitEngine.readStepCountToday()
+            healthkitEngine.readCaloiresBurnedToday()
+            healthkitEngine.readWalkingandRunningDistanceToday()
+            
+            //it should create a stat item in here and THEN amend it to the array
+            
+            
+            
         }
         
     }
     
+    //google sign out
     func signOut() {
         do {
             try Auth.auth().signOut()  // Sign the user out from Firebase
@@ -119,11 +133,25 @@ struct HomeView: View {
     
 }
 
+
+//enum to make it easier to determine between stat types
+enum statType {
+
+    case stepCount
+    case caloriesBurned
+    case distance
+    case none
+    
+    
+}
+
 struct StatItem {
     let label: String
     let value: String
     let icon: String
     let details: String
+    let type: statType
+    
 }
 
 #Preview {

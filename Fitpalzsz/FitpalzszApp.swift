@@ -15,6 +15,7 @@ import GoogleSignIn
 @main
 struct FitpalzszApp: App {
     
+    //firebase config
     class AppDelegate: NSObject, UIApplicationDelegate {
       func application(_ application: UIApplication,
                        didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey : Any]? = nil) -> Bool {
@@ -23,12 +24,15 @@ struct FitpalzszApp: App {
       }
     }
     
+    //google sign in
     func application(_ app: UIApplication,
                      open url: URL,
                      options: [UIApplication.OpenURLOptionsKey: Any] = [:]) -> Bool {
       return GIDSignIn.sharedInstance.handle(url)
     }
     
+    
+    //healthkit initialization
     private let healthStore: HKHealthStore
     
     init() {
@@ -58,6 +62,7 @@ struct FitpalzszApp: App {
            UITabBar.appearance().unselectedItemTintColor = UIColor.gray
        }
     
+    //healthkit permissions
     private func requestHealthKitAccess() {
         
         let samples = Set([HKObjectType.quantityType(forIdentifier: .stepCount)!,HKObjectType.quantityType(forIdentifier: .distanceWalkingRunning)!,HKObjectType.quantityType(forIdentifier:  .activeEnergyBurned)!])

@@ -2,8 +2,6 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-	<key>NSHealthShareUsageDescription</key>
-	<string>This app wants to read your health data to track your fitness progress</string>
 	<key>CFBundleURLTypes</key>
 	<array>
 		<dict>
@@ -11,6 +9,7 @@
 			<string>Editor</string>
 			<key>CFBundleURLSchemes</key>
 			<array>
+				<string>com.googleusercontent.apps.658113835950-nl885mt1sl9b2kem8bl0i31erkkslg45</string>
 				<string>com.googleusercontent.apps.658113835950-mbhk64je8pgmqpps3anmdkjkelq7v0k9</string>
 			</array>
 		</dict>
