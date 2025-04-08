@@ -205,6 +205,8 @@ import FirebaseCore
 import FirebaseAuth
 import GoogleSignIn
 
+
+
 // LOGIN PAGE
 struct ContentView: View {
     @State private var email = ""
@@ -221,7 +223,7 @@ struct ContentView: View {
             content
         }
     }
-    
+
     var content: some View {
         NavigationStack {
             VStack {
@@ -379,14 +381,14 @@ struct SignUpView: View {
         
         
         ZStack {
-            Color.black // background color to black
+            Color.red// background color, but should be set to #191919
             
             VStack {
-                Image("logo")
+                Image("fitpalz_logo")
                     .resizable()
                     .scaledToFit()
                     .frame(width: 330, height: 330)
-                    .padding(.top, -255)
+                    .padding(.top, 55)
                 
                 Text("Sign Up")
                     .foregroundColor(.white)
@@ -396,17 +398,33 @@ struct SignUpView: View {
                 // Sign-up form UI elements
                 TextField("New Email", text: $email)
                     .padding()
-                    .background(Color.gray.opacity(0.2))
-                    .border(Color(red: 123/255, green: 106/255, blue: 244/255), width: 0.6)
-                    .cornerRadius(2)
+                    .textFieldStyle(PlainTextFieldStyle())
+                    .background(Color(red: 0.15, green: 0.15, blue: 0.15))
+                    .foregroundColor(.white)
+                    .cornerRadius(40)
+                    .overlay(
+                         RoundedRectangle(cornerRadius: 40)
+                             .strokeBorder(Color(hex: "7b6af4"), lineWidth: 2)
+                    )
                     .padding(.bottom, 8)
+                    .offset(y: -30)
+                    
+                    
+                
+                
                 
                 SecureField("New Password", text: $password)
                     .padding()
-                    .background(Color.gray.opacity(0.2))
-                    .border(Color(red: 123/255, green: 106/255, blue: 244/255), width: 0.6)
-                    .cornerRadius(2)
-                    .padding(.bottom, 8)
+                    .textFieldStyle(PlainTextFieldStyle())
+                    .background(Color(red: 0.15, green: 0.15, blue: 0.15))
+                    .foregroundColor(.white)
+                    .cornerRadius(40)
+                    .overlay(
+                         RoundedRectangle(cornerRadius: 40)
+                             .strokeBorder(Color(hex: "7b6af4"), lineWidth: 2)
+                    )
+                    .padding(.bottom, 15)
+                    .offset(y: -30)
                 
                 // Display error message if any
                 if let errorMessage = errorMessage {
@@ -420,14 +438,17 @@ struct SignUpView: View {
                 }
                 .padding()
                 .frame(maxWidth: .infinity)
-                .background(Color(red: 0.48, green: 0.41, blue: 0.95))
+                .background(Color(hex: "7b6af4"))
                 .foregroundColor(.white)
-                .cornerRadius(10)
+                .cornerRadius(40)
                 .padding(.horizontal, 115)
-                .offset(y: 45)
+                .offset(y: 2)
+                
             }
             .padding()
             .foregroundColor(.white) // Set the text color to white for contrast
+            .background(Color(hex: "191919"))
+
         }
         .edgesIgnoringSafeArea(.all)  // Ensures the background covers the entire screen
         .navigationBarTitle("Sign Up", displayMode: .inline)
