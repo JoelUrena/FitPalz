@@ -2,7 +2,7 @@
 //  ContentView.swift
 //  test
 
-mport SwiftUI
+import SwiftUI
 import Firebase
 import FirebaseCore
 import FirebaseAuth
