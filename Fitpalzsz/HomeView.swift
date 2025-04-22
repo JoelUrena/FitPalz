@@ -29,11 +29,11 @@ extension Color {
 struct HomeView: View {
     @State private var expandedStat: String? = nil
     @State private var isPulsing = false
-    @State private var userIsLoggedIn = false
+    @Binding var userIsLoggedIn: Bool
     @State private var stepCount = 0
     @StateObject var healthkitEngine = HealthkitEngine.shared
     
-    let contentView = ContentView()
+    
 
     let statsData: [StatItem] = [
         StatItem(label: "Calories Burned", value: "", icon: "flame.fill", details: "You burned 0.0 kcal today! Keep up the good work!", type: statType.caloriesBurned),
@@ -62,17 +62,19 @@ struct HomeView: View {
                         .foregroundColor(.white)
                         .bold()
                     
-                    NavigationLink("Sign Out") {
-                        contentView
-                        
-                    }.onDisappear {
+                    Button("Sign Out"){
                         signOut()
-                    }.padding()
-                        .font(.system(size: 17, weight: .bold))
-                        .underline(true, color: .blue)
-                        .frame(maxWidth: .infinity)
-                        .foregroundColor(.blue)
-                        .cornerRadius(10)
+                    }
+                    .padding()
+                    .font(.system(size: 17, weight: .bold))
+                    .underline(true,color: .purple)
+                    .frame(maxWidth: .infinity)
+                    .foregroundColor(.purple)
+                    .cornerRadius(10)
+                    
+                    
+                        
+                   
                         
 
                     ForEach(statsData, id: \.label) { stat in
@@ -180,6 +182,6 @@ struct StatItem {
 }
 
 #Preview {
-    HomeView()
+    HomeView(userIsLoggedIn: .constant(true))
 }
 

@@ -14,9 +14,9 @@ struct ContentView: View {
     
     let signUpScreen = SignUpView()
     
-    var body: some View {
+    var body: some View { 
         if userIsLoggedIn {
-            HomeView() // Navigate to the next screen
+            MainTabView(userIsLoggedIn:$userIsLoggedIn) // Navigate to the next screen
         } else {
             content
         }

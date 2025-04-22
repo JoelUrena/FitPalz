@@ -1,9 +1,11 @@
 import SwiftUI
 
 struct MainTabView: View {
+    @Binding var userIsLoggedIn: Bool
+    
     var body: some View {
         TabView {
-            HomeView()
+            HomeView(userIsLoggedIn: $userIsLoggedIn)
                 .tabItem {
                     Image(systemName: "house")
                     Text("Home")
