@@ -23,7 +23,7 @@ extension Color {
         )
     }
 }
-
+ 
 
 
 struct HomeView: View {
@@ -106,9 +106,12 @@ struct HomeView: View {
                                     .cornerRadius(8)
                             }
                         }
-                        .padding()
-                        .background(expandedStat == stat.label ? Color.purple : Color.black.opacity(0.3))
-                        .cornerRadius(12)
+                        .padding() 
+                        .background(
+                            RoundedRectangle(cornerRadius: 12)
+                                .fill(Color.black.opacity(0.7))
+                                .shadow(color: Color.purple.opacity(0.3), radius: 5) 
+                        )
                         .scaleEffect(expandedStat == stat.label ? 1.03 : 1.0)
                         .animation(.spring(), value: expandedStat)
                         .onTapGesture {
@@ -126,7 +129,7 @@ struct HomeView: View {
                     isPulsing = true
                 }
             
-        }.background(Color(hex: "19191919").edgesIgnoringSafeArea(.all))
+        }.background(Color(hex: "191919").edgesIgnoringSafeArea(.all))
         
         }.task {
             

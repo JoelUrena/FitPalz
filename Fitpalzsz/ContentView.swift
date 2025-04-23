@@ -19,7 +19,7 @@ struct ContentView: View {
             MainTabView(userIsLoggedIn:$userIsLoggedIn) // Navigate to the next screen
         } else {
             content
-        }
+        } 
     }
     
     var content: some View {
@@ -90,14 +90,14 @@ struct ContentView: View {
                 
                 
                 //Sign up button
-                NavigationLink("Don't have an account? Sign Up!") {
+                NavigationLink("Don't have an account? Sign Up!") { 
                     signUpScreen
                 }.padding()
                     .font(.system(size: 17, weight: .bold))
                     .underline(true, color: .blue)
                     .frame(maxWidth: .infinity)
                     .foregroundColor(.blue)
-                    .cornerRadius(10)
+                    .cornerRadius(10) 
                     .offset(y: -199)
                 
                 
@@ -179,33 +179,40 @@ struct SignUpView: View {
         
         
         ZStack {
-            Color.black // background color to black
+            Color(hex: "191919") // background color to black
+                .edgesIgnoringSafeArea(.all)
             
             VStack {
-                Image("logo")
+                Image("fitpalz_logo")
                     .resizable()
                     .scaledToFit()
                     .frame(width: 330, height: 330)
-                    .padding(.top, -255)
+                    .padding(.top, -40) 
                 
                 Text("Sign Up")
-                    .foregroundColor(.white)
+                    .foregroundColor(.white) 
                     .offset(y: -35)
-                    .font(.system(size: 31, weight: .bold))
+                    .font(.system(size: 31, weight: .bold)) 
                 
                 // Sign-up form UI elements
                 TextField("New Email", text: $email)
                     .padding()
                     .background(Color.gray.opacity(0.2))
-                    .border(Color(red: 123/255, green: 106/255, blue: 244/255), width: 0.6)
-                    .cornerRadius(2)
+                    .cornerRadius(40)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 40)
+                            .stroke(Color(red: 123/255, green: 106/255, blue: 244/255), lineWidth: 1)
+                    )
                     .padding(.bottom, 8)
                 
                 SecureField("New Password", text: $password)
                     .padding()
                     .background(Color.gray.opacity(0.2))
-                    .border(Color(red: 123/255, green: 106/255, blue: 244/255), width: 0.6)
-                    .cornerRadius(2)
+                    .cornerRadius(40)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 40)
+                            .stroke(Color(red: 123/255, green: 106/255, blue: 244/255), lineWidth: 1)
+                    )
                     .padding(.bottom, 8)
                 
                 // Display error message if any
