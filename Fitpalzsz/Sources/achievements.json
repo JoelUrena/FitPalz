@@ -1,0 +1,16 @@
+[
+    {
+        "id": "moonwalk-103k-steps",
+        "name": "Moonwalk",
+        "description": "Accumulate 103,435 total steps.",
+        "baseXP": 103435,
+        "assetName": "moonwalk"
+    },
+    {
+        "id": "ten-day-login",
+        "name": "Habit Hero",
+        "description": "Log in 10 days in a row.",
+        "baseXP": 1000,
+        "assetName": "login_streak_10"
+    }
+]
