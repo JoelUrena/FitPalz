@@ -11,13 +11,13 @@ extension Color {
         (r, g, b) = (
             (int >> 16) & 0xFF,
             (int >> 8) & 0xFF,
-            int & 0xFF
+            int & 0xFF 
         )
         
         self.init(
             .sRGB,
             red: Double(r) / 255,
-            green: Double(g) / 255,
+            green: Double(g) / 255,  
             blue: Double(b) / 255,
             opacity: 1
         )
@@ -56,27 +56,14 @@ struct HomeView: View {
                         .scaledToFit()
                         .frame(height: 300)
                         .padding(.top, 30)
-
+                    
                     Text("Welcome Back!")
                         .font(.title)
                         .foregroundColor(.white)
                         .bold()
                     
-                    Button("Sign Out"){
-                        signOut()
-                    }
-                    .padding()
-                    .font(.system(size: 17, weight: .bold))
-                    .underline(true,color: .purple)
-                    .frame(maxWidth: .infinity)
-                    .foregroundColor(.purple)
-                    .cornerRadius(10)
                     
                     
-                        
-                   
-                        
-
                     ForEach(statsData, id: \.label) { stat in
                         VStack(alignment: .leading, spacing: 10) {
                             HStack {
@@ -89,14 +76,14 @@ struct HomeView: View {
                                     .background(Color(hex: "7b6af4"))
                                     .clipShape(Circle())
                                 
-
+                                
                                 Text("\(stat.label): \(healthkitEngine.getData(forType: stat.type))")
                                     .foregroundColor(.white)
                                     .font(.headline)
-
+                                
                                 Spacer()
                             }
-
+                            
                             if expandedStat == stat.label {
                                 Text(stat.details)
                                     .font(.subheadline)
@@ -106,11 +93,11 @@ struct HomeView: View {
                                     .cornerRadius(8)
                             }
                         }
-                        .padding() 
+                        .padding()
                         .background(
                             RoundedRectangle(cornerRadius: 12)
                                 .fill(Color.black.opacity(0.7))
-                                .shadow(color: Color.purple.opacity(0.3), radius: 5) 
+                                .shadow(color: Color.purple.opacity(0.3), radius: 5)
                         )
                         .scaleEffect(expandedStat == stat.label ? 1.03 : 1.0)
                         .animation(.spring(), value: expandedStat)
@@ -120,29 +107,35 @@ struct HomeView: View {
                             }
                         }
                     }
-
-                    
                 }
+                
                 .padding()
                 .padding(.bottom, 40)
                 .onAppear {
                     isPulsing = true
                 }
-            
-        }.background(Color(hex: "191919").edgesIgnoringSafeArea(.all))
-        
-        }.task {
-            
-            healthkitEngine.readStepCountToday()
-            healthkitEngine.readCaloiresBurnedToday()
-            healthkitEngine.readWalkingandRunningDistanceToday()
-            
-            //it should create a stat item in here and THEN amend it to the array
-            
-            
+                
+            }
+            .background(Color(hex: "191919").edgesIgnoringSafeArea(.all))
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button(action: {
+                        signOut()
+                    }) {
+                        Image(systemName: "rectangle.portrait.and.arrow.right")
+                            .font(.title2)
+                            .foregroundColor(.white)
+                            .accessibilityLabel("Sign Out")
+                    }
+                }
+            } 
+            .task {
+                healthkitEngine.readStepCountToday()
+                healthkitEngine.readCaloiresBurnedToday()
+                healthkitEngine.readWalkingandRunningDistanceToday()
+            }
             
         }
-        
     }
     
     //google sign out

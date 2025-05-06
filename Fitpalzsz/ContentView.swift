@@ -5,7 +5,7 @@ import FirebaseCore
 import FirebaseAuth
 import GoogleSignIn
 
-// LOGIN PAGE
+// LOGIN PAGE 
 struct ContentView: View {
     @State private var email = ""
     @State private var password = ""
@@ -103,13 +103,12 @@ struct ContentView: View {
                 
                 .padding(.horizontal, 20)
                 Spacer()
-                .frame(width: 350)
+                .frame(width: 350) 
                 
                 .onAppear {
                     Auth.auth().addStateDidChangeListener { auth, user in
-                        if user != nil {
-                            userIsLoggedIn.toggle()
-                        }
+                        userIsLoggedIn = (user != nil)
+                        
                     }
                 }
 }
@@ -223,7 +222,7 @@ struct SignUpView: View {
                 }
                 
                 Button("Sign Up") {
-                    signUp()
+                    signUp() 
                 }
                 .padding()
                 .frame(maxWidth: .infinity)
@@ -265,7 +264,7 @@ struct SignUpView: View {
             }
             
             print("User signed up successfully.")
-        }
+        } 
     }
 }
 

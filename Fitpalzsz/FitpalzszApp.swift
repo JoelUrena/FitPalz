@@ -1,9 +1,4 @@
-//
-//  FitpalzszApp.swift
-//  Fitpalzsz
-//
-//  Created by Naomi Talukder on 3/24/25.
-//
+
 
 import SwiftUI
 import HealthKit

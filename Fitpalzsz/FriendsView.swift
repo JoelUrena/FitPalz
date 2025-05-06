@@ -23,7 +23,10 @@ let sampleFriends = [
 struct FriendsView: View {
     @State private var searchText: String = ""
     @State private var isAddFriendPresented = false
-
+    @State private var expandedFriendID: UUID? = nil
+    
+    
+    
     var filteredFriends: [Friend] {
         if searchText.isEmpty {
             return sampleFriends
@@ -31,16 +34,16 @@ struct FriendsView: View {
             return sampleFriends.filter { $0.name.localizedCaseInsensitiveContains(searchText) }
         }
     }
-
+    
     var body: some View {
         NavigationView {
             ZStack {
                 Color(hex: "191919").edgesIgnoringSafeArea(.all)
-           
-
+                
+                 
                 VStack {
                     List(filteredFriends) { friend in
-                        NavigationLink(destination: FriendDetailView(friend: friend)) {
+                        VStack(alignment: .leading, spacing: 10) {
                             HStack(spacing: 16) {
                                 Image(systemName: friend.profileImage)
                                     .resizable()
@@ -63,15 +66,34 @@ struct FriendsView: View {
 
                                 Image(systemName: "chevron.right")
                                     .foregroundColor(.gray)
+                                    .rotationEffect(.degrees(expandedFriendID == friend.id ? 180 : 0))
+                                    .animation(.easeInOut(duration: 0.3), value: expandedFriendID)
                             }
-                            .padding()
-                            .background(
-                                RoundedRectangle(cornerRadius: 12)
-                                    .fill(Color.black.opacity(0.7))
-                                    .shadow(color: Color.purple.opacity(0.3), radius: 5)
-                            )
+
+                            if expandedFriendID == friend.id {
+                                VStack(alignment: .leading, spacing: 10) {
+                                    StatRow(icon: "flame.fill", label: "Calories Burned", value: "\(friend.caloriesBurned)")
+                                    StatRow(icon: "shoeprints.fill", label: "Distance Walked", value: String(format: "%.1f miles", friend.distanceWalked))
+                                    StatRow(icon: "trophy", label: "Challenges Completed", value: "\(friend.challengesCompleted)%")
+                                    StatRow(icon: "bed.double.fill", label: "Sleep", value: "\(friend.sleepHours) hours this week")
+                                }
+                                .padding(.top, 10)
+                            }
+                        }
+                        .padding()
+                        .background(
+                            RoundedRectangle(cornerRadius: 12)
+                                .fill(Color.black.opacity(0.7))
+                                .shadow(color: Color.purple.opacity(0.3), radius: 5)
+                        )
+                        .onTapGesture {
+                            withAnimation {
+                                expandedFriendID = (expandedFriendID == friend.id) ? nil : friend.id
+                            }
                         }
                         .listRowBackground(Color.clear)
+                    }
+
                     }
                     .listStyle(PlainListStyle())
                     .scrollContentBackground(.hidden)
@@ -109,9 +131,13 @@ struct FriendsView: View {
                 .background(Color.black.edgesIgnoringSafeArea(.all))
                 .foregroundColor(.white)
             }
+            
         }
+        
     }
-}
+
+    
+
 // Friend Detail View
 struct FriendDetailView: View {
     var friend: Friend
