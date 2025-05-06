@@ -76,6 +76,9 @@ struct FitpalzszApp: App {
     var body: some Scene {
         WindowGroup {
             ContentView()
+            //FindFriendsView()
+                
+
         }
     }  
 }
