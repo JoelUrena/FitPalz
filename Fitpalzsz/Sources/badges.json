@@ -1,0 +1,16 @@
+[
+    {
+        "id": "rings-closed-today",
+        "name": "Ring Closer",
+        "description": "Close all rings today.",
+        "tier": 15,
+        "assetName": "rings_today"
+    },
+    {
+        "id": "five-day-rings",
+        "name": "5-Day Ring Streak",
+        "description": "Close rings 5 consecutive days.",
+        "tier": 30,
+        "assetName": "rings_streak_5"
+    }
+]
