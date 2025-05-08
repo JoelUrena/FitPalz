@@ -54,6 +54,9 @@ struct Friend: Identifiable {
 @MainActor
 final class FriendStore: ObservableObject {
     @Published private(set) var friends: [Friend] = []
+    
+    /// Signed‑in user’s own profile (updated by XPSystem after login)
+    @Published var currentUser: UserModel = UserModel()
 
     /// Add a contact as a friend if not already present
     func add(contact: ContactRow) {

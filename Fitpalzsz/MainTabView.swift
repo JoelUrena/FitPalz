@@ -10,10 +10,7 @@ struct MainTabView: View {
                 }
 
             LeaderboardView()
-                .tabItem {
-                    Image(systemName: "trophy")
-                    Text("Leaderboard")
-                }
+                .tabItem { Label("Leaderboard", systemImage: "trophy") }
 
 //            FriendsListView()
 //                .tabItem {
