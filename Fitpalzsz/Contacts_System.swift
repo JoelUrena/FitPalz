@@ -15,8 +15,8 @@
 //  • Uses MessageUI to open a pre‑filled SMS draft for invites.
 //
 
-import Contacts
-import ContactsUI
+@preconcurrency import Contacts          // suppress Sendable warnings
+@preconcurrency import ContactsUI
 import SwiftUI
 import MessageUI
 
@@ -42,6 +42,47 @@ struct ContactRow: Identifiable {
     let picture : UIImage?         // nil if not available
     let onFitpalz: Bool
     let username : String?         // only if onFitpalz
+}
+
+// Combines address‑book data and UserModel progress
+struct Friend: Identifiable {
+    let id: String            // same as contact.id
+    let contact: ContactRow
+    var user: UserModel
+}
+
+@MainActor
+final class FriendStore: ObservableObject {
+    @Published private(set) var friends: [Friend] = []
+
+    /// Add a contact as a friend if not already present
+    func add(contact: ContactRow) {
+        guard !isFriend(contact.phone) else { return }
+        var user = UserModel()
+        user.totalXP = 0
+        user.unlockIDs = [contact.id]
+        friends.append(Friend(id: contact.id, contact: contact, user: user))
+    }
+
+    /// Check if a phone number is already in the friends list
+    func isFriend(_ phone: String) -> Bool {
+        friends.contains(where: { $0.contact.phone == phone })
+    }
+}
+
+// Helper lives at file scope
+/// Normalises any phone string into an E.164‑like format used by ContactsOnFitpalz.
+func normalizePhone(_ raw: String) -> String {
+    let digits = raw.filter { "0123456789".contains($0) }
+    if raw.trimmingCharacters(in: .whitespaces).first == "+" {
+        return "+" + digits
+    } else if digits.count == 10 {
+        return "+1" + digits
+    } else if digits.count == 11 && digits.first == "1" {
+        return "+" + digits
+    } else {
+        return "+" + digits
+    }
 }
 
 // MARK: - ContactManager
@@ -90,21 +131,23 @@ final class ContactManager: NSObject, ObservableObject {
     }
     
     private func loadContacts() async {
-        // heavy contact fetch off the main thread
-        await withCheckedContinuation { continuation in
+        // Heavy contact fetch off the main thread
+        await withCheckedContinuation { (continuation: CheckedContinuation<Void, Never>) in
+            let cnStore = self.store
             DispatchQueue.global(qos: .userInitiated).async {
-                
-                let keys = [CNContactGivenNameKey, CNContactFamilyNameKey,
-                            CNContactPhoneNumbersKey, CNContactThumbnailImageDataKey] as [CNKeyDescriptor]
+                let keys = [CNContactGivenNameKey,
+                            CNContactFamilyNameKey,
+                            CNContactPhoneNumbersKey,
+                            CNContactThumbnailImageDataKey] as [CNKeyDescriptor]
                 let request = CNContactFetchRequest(keysToFetch: keys)
                 
                 var rows: [ContactRow] = []
                 var idCounter: [String:Int] = [:]   // phone → collision counter
                 
                 do {
-                    try self.store.enumerateContacts(with: request) { contact, _ in
+                    try cnStore.enumerateContacts(with: request) { contact, _ in
                         guard let phoneValue = contact.phoneNumbers.first?.value.stringValue else { return }
-                        let normalized = ContactManager.normalize(phoneValue)
+                        let normalized = normalizePhone(phoneValue)
                         // ensure unique ID even if multiple contacts share the same phone
                         let collisions = (idCounter[normalized] ?? 0) + 1
                         idCounter[normalized] = collisions
@@ -135,29 +178,6 @@ final class ContactManager: NSObject, ObservableObject {
             }
         }
     }
-    
-    /*
-     Normalises any phone string into an E.164‑like format used by
-     `ContactsOnFitpalz`.
-     
-     • Keeps only “+” and digits.
-     • If the result starts with “+” we assume it already includes a country code.
-     • If it has exactly 10 digits (US local) we prefix “+1”.
-     • If it has 11 digits and starts with “1” we prefix “+”.
-     • Otherwise we return the raw digits (best‑effort fallback).
-     */
-    private static func normalize(_ raw: String) -> String {
-        let digits = raw.filter { "0123456789".contains($0) }
-        if raw.trimmingCharacters(in: .whitespaces).first == "+" {
-            return "+" + digits
-        } else if digits.count == 10 {
-            return "+1" + digits
-        } else if digits.count == 11 && digits.first == "1" {
-            return "+" + digits
-        } else {
-            return "+" + digits    // fallback
-        }
-    }
 }
 
 // MARK: - MessageCompose helper
@@ -183,6 +203,7 @@ struct MessageComposer: UIViewControllerRepresentable {
 
 // MARK: - Find Friends View
 struct FindFriendsView: View {
+    @EnvironmentObject var friendStore: FriendStore
     @StateObject private var manager = ContactManager()
     @State private var showSMS: ContactRow? = nil
     
@@ -194,19 +215,29 @@ struct FindFriendsView: View {
             } else if manager.noContacts {
                 Text("It appears you don't have any contacts.")
             } else {
+                let availableOn = manager.onFitpalz.filter { !friendStore.isFriend($0.phone) }
+                let availableInvite = manager.invitePalz.filter { !friendStore.isFriend($0.phone) }
+                
                 List {
-                    if !manager.onFitpalz.isEmpty {
+                    if !availableOn.isEmpty {
                         Section("On FitPalz") {
-                            ForEach(manager.onFitpalz) { c in
+                            ForEach(availableOn) { c in
                                 ContactCell(contact: c, actionTitle: "ADD") {
-                                    // TODO: send friend request
+                                    friendStore.add(contact: c)
+                                    // Remove the contact from the local On‑FitPalz list so it disappears after adding
+                                    if let idx = manager.onFitpalz.firstIndex(where: { $0.id == c.id }) {
+                                        manager.onFitpalz.remove(at: idx)
+                                    }
+                                    if let idx2 = manager.invitePalz.firstIndex(where: { $0.id == c.id }) {
+                                        manager.invitePalz.remove(at: idx2)
+                                    }
                                 }
                             }
                         }
                     }
-                    if !manager.invitePalz.isEmpty {
+                    if !availableInvite.isEmpty {
                         Section("Invite Palz") {
-                            ForEach(manager.invitePalz) { c in
+                            ForEach(availableInvite) { c in
                                 ContactCell(contact: c, actionTitle: "INVITE") {
                                     showSMS = c
                                 }
@@ -267,25 +298,48 @@ private struct ContactCell: View {
 
 // MARK: - Friends List View
 struct FriendsListView: View {
-    let friends: [UserModel]   // prerequisite: already added
+    @EnvironmentObject var friendStore: FriendStore
+    
     var body: some View {
-        List(friends, id: \.unlockIDs) { friend in
-            HStack {
-                // Placeholder avatar
-                Circle().fill(.blue).frame(width: 40, height: 40)
-                VStack(alignment: .leading) {
-                    Text("Friend")   // replace with real profile name
-                    let badges = friend.unlockIDs.filter { id in
-                        XPSystem().gallery.badges.contains(where: { $0.id == id })
+        if friendStore.friends.isEmpty {
+            // ---------- Empty‑state placeholder ----------
+            VStack(spacing: 12) {
+                Image(systemName: "person.2.slash")
+                    .font(.largeTitle)
+                    .foregroundStyle(.secondary)
+                Text("No friends yet")
+                    .font(.headline)
+                    .foregroundStyle(.secondary)
+                Text("Go to the Find Friends tab to add pals!")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(Color(.systemBackground))
+        } else {
+            // ---------- Populated list ----------
+            List(friendStore.friends) { friend in
+                HStack {
+                    // Placeholder avatar
+                    Circle().fill(.blue).frame(width: 40, height: 40)
+                    
+                    VStack(alignment: .leading) {
+                        Text(friend.contact.name)
+                        
+                        let badgeIDs = friend.user.unlockIDs.filter { id in
+                            XPSystem().gallery.badges.contains(where: { $0.id == id })
+                        }
+                        let achievementIDs = friend.user.unlockIDs.filter { id in
+                            XPSystem().gallery.achievements.contains(where: { $0.id == id })
+                        }
+                        Text("B \(badgeIDs.count) | A \(achievementIDs.count)")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
                     }
-                    let achievements = friend.unlockIDs.filter { id in
-                        XPSystem().gallery.achievements.contains(where: { $0.id == id })
-                    }
-                    Text("B \(badges.count) | A \(achievements.count)")
-                        .font(.caption).foregroundStyle(.secondary)
+                    
+                    Spacer()
+                    Text("\(friend.user.totalXP) XP").bold()
                 }
-                Spacer()
-                Text("\(friend.totalXP) XP").bold()
             }
         }
     }
@@ -307,10 +361,26 @@ struct ContactsSystem_Previews: PreviewProvider {
         return VStack {
             FindFriendsView()
                 .previewDisplayName("Find Friends")
-
-            FriendsListView(friends: [dummy])
-                .previewDisplayName("Friends List")
         }
+    }
+}
+#endif
+
+// MARK: - Combined Find & Friends Preview (debug only)
+#if DEBUG
+struct FriendsAndFind_Previews: PreviewProvider {
+    static var previews: some View {
+        let sharedStore = FriendStore()   // starts empty
+        
+        return TabView {
+            FindFriendsView()
+                .tabItem { Label("Find Friends", systemImage: "person.badge.plus") }
+            
+            FriendsListView()
+                .tabItem { Label("Friends", systemImage: "person.2") }
+        }
+        .environmentObject(sharedStore)
+        .previewDisplayName("Find + Friends interactive")
     }
 }
 #endif

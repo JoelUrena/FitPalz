@@ -13,12 +13,16 @@ struct ContentView: View {
     @State private var password = ""
     @State private var userIsLoggedIn = false
     @State private var errorMessage: String?
+    @StateObject private var friendStore = FriendStore()
     
     let signUpScreen = SignUpView()
     
     var body: some View {
         if userIsLoggedIn {
-            HomeView() // Navigate to the next screen
+            //HomeView() // Navigate to the next screen
+            MainTabView()
+                .environmentObject(friendStore)
+            
         } else {
             content
         }

@@ -15,11 +15,16 @@ struct MainTabView: View {
                     Text("Leaderboard")
                 }
 
-            FriendsView()
-                .tabItem {
-                    Image(systemName: "person.2")
-                    Text("Friends")
-                }
+//            FriendsListView()
+//                .tabItem {
+//                    Image(systemName: "person.2")
+//                    Text("Friends")
+//                }
+            FindFriendsView()
+                    .tabItem { Label("Find Friends", systemImage: "person.badge.plus") }
+
+                FriendsListView()
+                    .tabItem { Label("Friends", systemImage: "person.2") }
         }
     }
 }
