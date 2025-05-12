@@ -19,6 +19,8 @@ struct FitpalzszApp: App {
     // HealthKit
     private let healthStore: HKHealthStore
     
+    @StateObject private var healthkitEngine = HealthkitEngine()
+    
     //firebase config
     class AppDelegate: NSObject, UIApplicationDelegate {
       func application(_ application: UIApplication,
@@ -50,6 +52,12 @@ struct FitpalzszApp: App {
         healthStore = HKHealthStore()
         requestHealthKitAccess()
         
+        //The healthkit stuff should happen here. That way it is ready by the time the app gets to the homescreen
+        healthkitEngine.readStepCountToday()
+        healthkitEngine.readCaloiresBurnedToday()
+        healthkitEngine.readWalkingandRunningDistanceToday()
+        
+        
            let appearance = UITabBarAppearance()
            appearance.configureWithOpaqueBackground()
            appearance.backgroundColor = UIColor.black
@@ -77,7 +85,7 @@ struct FitpalzszApp: App {
     var body: some Scene {
         WindowGroup {
             ContentView()
-                .environmentObject(friendStore)
+                .environmentObject(friendStore).environmentObject(healthkitEngine)
         }
     }  
 }

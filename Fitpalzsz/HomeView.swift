@@ -31,7 +31,7 @@ struct HomeView: View {
     @State private var isPulsing = false
     @Binding var userIsLoggedIn: Bool
     @State private var stepCount = 0
-    @StateObject var healthkitEngine = HealthkitEngine.shared
+    @EnvironmentObject private var healthkitEngine: HealthkitEngine
     
     
 
@@ -130,9 +130,10 @@ struct HomeView: View {
                 }
             } 
             .task {
-                healthkitEngine.readStepCountToday()
-                healthkitEngine.readCaloiresBurnedToday()
-                healthkitEngine.readWalkingandRunningDistanceToday()
+                
+                // All we need to do now is load the data into the xp system
+                
+                
             }
             
         }

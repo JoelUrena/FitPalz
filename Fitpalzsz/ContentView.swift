@@ -15,6 +15,7 @@ struct ContentView: View {
     @State private var userIsLoggedIn = false
     @State private var errorMessage: String?
     @StateObject private var friendStore = FriendStore()
+    @EnvironmentObject private var healthkitEngine: HealthkitEngine
     
     let signUpScreen = SignUpView()
     
@@ -22,7 +23,7 @@ struct ContentView: View {
         if userIsLoggedIn {
 
             MainTabView(userIsLoggedIn:$userIsLoggedIn) // Navigate to the next screen
-                .environmentObject(friendStore)
+                .environmentObject(friendStore).environmentObject(healthkitEngine)
             
 
         } else {
@@ -196,9 +197,6 @@ struct SignUpView: View {
 
             Color(hex: "191919") // background color to black
                 .edgesIgnoringSafeArea(.all)
-
-            
-
             
             VStack {
                 Image("fitpalz_logo")
@@ -230,9 +228,6 @@ struct SignUpView: View {
                     .padding(.bottom, 8)
                     .offset(y: -30)
                     
-                    
-                
-                
                 
                 SecureField("New Password", text: $password)
                     .padding()
