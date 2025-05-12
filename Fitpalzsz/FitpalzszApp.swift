@@ -10,6 +10,15 @@ import GoogleSignIn
 @main
 struct FitpalzszApp: App {
     
+    // Firebase delegate adaptor
+    @UIApplicationDelegateAdaptor(AppDelegate.self) var delegate
+
+    // Shared FriendStore
+    @StateObject private var friendStore = FriendStore()
+
+    // HealthKit
+    private let healthStore: HKHealthStore
+    
     //firebase config
     class AppDelegate: NSObject, UIApplicationDelegate {
       func application(_ application: UIApplication,
@@ -28,7 +37,6 @@ struct FitpalzszApp: App {
     
     
     //healthkit initialization
-    private let healthStore: HKHealthStore
     
     init() {
         
@@ -41,8 +49,6 @@ struct FitpalzszApp: App {
         
         healthStore = HKHealthStore()
         requestHealthKitAccess()
-        
-        @UIApplicationDelegateAdaptor(AppDelegate.self) var delegate
         
            let appearance = UITabBarAppearance()
            appearance.configureWithOpaqueBackground()
@@ -71,6 +77,7 @@ struct FitpalzszApp: App {
     var body: some Scene {
         WindowGroup {
             ContentView()
+                .environmentObject(friendStore)
         }
     }  
 }

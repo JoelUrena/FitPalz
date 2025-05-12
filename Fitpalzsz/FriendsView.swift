@@ -1,4 +1,37 @@
 import SwiftUI
+import Contacts
+
+func fetchContacts(completion: @escaping ([Friend]) -> Void) {
+    let contactStore = CNContactStore()
+    let keysToFetch: [CNKeyDescriptor] = [
+        CNContactGivenNameKey as CNKeyDescriptor,
+        CNContactFamilyNameKey as CNKeyDescriptor,
+        CNContactPhoneNumbersKey as CNKeyDescriptor
+    ]
+    let request = CNContactFetchRequest(keysToFetch: keysToFetch)
+
+    var fetchedFriends: [Friend] = [] 
+
+    do {
+        try contactStore.enumerateContacts(with: request) { (contact, stop) in
+            let fullName = "\(contact.givenName) \(contact.familyName)"
+            let friend = Friend(
+                name: fullName,
+                profileImage: "person.circle",
+                caloriesBurned: Int.random(in: 500...2000),
+                stepsTaken: Int.random(in: 3000...15000),
+                distanceWalked: Double.random(in: 1...10),
+                challengesCompleted: Int.random(in: 10...100),
+                sleepHours: Int.random(in: 20...50)
+            )
+            fetchedFriends.append(friend)
+        }
+        completion(fetchedFriends)
+    } catch {
+        print("Failed to fetch contacts, error: \(error)")
+        completion([])
+    }
+} 
 
 // Friend Model
 struct Friend: Identifiable {
@@ -12,100 +45,124 @@ struct Friend: Identifiable {
     let sleepHours: Int
 }
 
-// Sample Data
-let sampleFriends = [
-    Friend(name: "Alex", profileImage: "person.circle", caloriesBurned: 1200, stepsTaken: 10500, distanceWalked: 7.2, challengesCompleted: 30, sleepHours: 40),
-    Friend(name: "Jordan", profileImage: "person.circle", caloriesBurned: 1600, stepsTaken: 14000, distanceWalked: 9.4, challengesCompleted: 50, sleepHours: 38),
-    Friend(name: "Sam", profileImage: "person.circle", caloriesBurned: 800, stepsTaken: 6000, distanceWalked: 4.1, challengesCompleted: 20, sleepHours: 35)
-]
+
 
 //Friends View
 struct FriendsView: View {
     @State private var searchText: String = ""
     @State private var isAddFriendPresented = false
     @State private var expandedFriendID: UUID? = nil
+    @State private var friends: [Friend] = [] 
     
     
     
     var filteredFriends: [Friend] {
         if searchText.isEmpty {
-            return sampleFriends
+            return friends
         } else {
-            return sampleFriends.filter { $0.name.localizedCaseInsensitiveContains(searchText) }
+            return friends.filter { $0.name.localizedCaseInsensitiveContains(searchText) }
         }
     }
     
     var body: some View {
-        NavigationView {
-            ZStack {
-                Color(hex: "191919").edgesIgnoringSafeArea(.all)
+       
+        ZStack {
+            Color(hex: "191919").edgesIgnoringSafeArea(.all)
                 
-                 
-                VStack {
-                    List(filteredFriends) { friend in
-                        VStack(alignment: .leading, spacing: 10) {
-                            HStack(spacing: 16) {
-                                Image(systemName: friend.profileImage)
-                                    .resizable()
-                                    .scaledToFit()
-                                    .foregroundColor(.white)
-                                    .background(Circle().fill(Color(hex: "7b6af4")).frame(width: 50, height: 50))
-                                    .frame(width: 40, height: 40)
-
-                                VStack(alignment: .leading, spacing: 4) {
-                                    Text(friend.name)
-                                        .foregroundColor(.white)
-                                        .font(.headline)
-
-                                    Text("Steps: \(friend.stepsTaken)")
-                                        .foregroundColor(.gray)
-                                        .font(.subheadline)
-                                }
-
-                                Spacer()
-
-                                Image(systemName: "chevron.right")
+            NavigationView {
+                VStack(spacing: 12) { 
+                    if filteredFriends.isEmpty {
+                        ZStack{
+                            Color(hex: "191919").edgesIgnoringSafeArea(.all)
+                            VStack(spacing:12) {
+                                Image(systemName: "person.slash")
+                                    .font(.system(size: 60))
                                     .foregroundColor(.gray)
-                                    .rotationEffect(.degrees(expandedFriendID == friend.id ? 180 : 0))
-                                    .animation(.easeInOut(duration: 0.3), value: expandedFriendID)
+                                Text("No friends yet")
+                                    .font(.title2)
+                                    .foregroundColor(.white)
+                                Text("Go to the Find Friend tab to add palz!")
+                                    .foregroundColor(.gray)
                             }
-
-                            if expandedFriendID == friend.id {
-                                VStack(alignment: .leading, spacing: 10) {
-                                    StatRow(icon: "flame.fill", label: "Calories Burned", value: "\(friend.caloriesBurned)")
-                                    StatRow(icon: "shoeprints.fill", label: "Distance Walked", value: String(format: "%.1f miles", friend.distanceWalked))
-                                    StatRow(icon: "trophy", label: "Challenges Completed", value: "\(friend.challengesCompleted)%")
-                                    StatRow(icon: "bed.double.fill", label: "Sleep", value: "\(friend.sleepHours) hours this week")
+                        }
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                        .background(Color(hex: "191919"))
+                        .edgesIgnoringSafeArea(.all)
+                    } else{
+                        
+                        List(filteredFriends) { friend in
+                            VStack(alignment: .leading, spacing: 10) {
+                                HStack(spacing: 16) {
+                                    Image(systemName: friend.profileImage)
+                                        .resizable()
+                                        .scaledToFit()
+                                        .foregroundColor(.white)
+                                        .background(Circle().fill(Color(hex: "7b6af4")).frame(width: 50, height: 50))
+                                        .frame(width: 40, height: 40)
+                                    
+                                    VStack(alignment: .leading, spacing: 4) {
+                                        Text(friend.name)
+                                            .foregroundColor(.white)
+                                            .font(.headline)
+                                        
+                                        Text("Steps: \(friend.stepsTaken)")
+                                            .foregroundColor(.gray)
+                                            .font(.subheadline)
+                                    }
+                                    
+                                    Spacer()
+                                    
+                                    Image(systemName: "chevron.right")
+                                        .foregroundColor(.gray)
+                                        .rotationEffect(.degrees(expandedFriendID == friend.id ? 180 : 0))
+                                        .animation(.easeInOut(duration: 0.3), value: expandedFriendID)
                                 }
-                                .padding(.top, 10)
+                                
+                                if expandedFriendID == friend.id {
+                                    VStack(alignment: .leading, spacing: 10) {
+                                        StatRow(icon: "flame.fill", label: "Calories Burned", value: "\(friend.caloriesBurned)")
+                                        StatRow(icon: "shoeprints.fill", label: "Distance Walked", value: String(format: "%.1f miles", friend.distanceWalked))
+                                        StatRow(icon: "trophy", label: "Challenges Completed", value: "\(friend.challengesCompleted)%")
+                                        StatRow(icon: "bed.double.fill", label: "Sleep", value: "\(friend.sleepHours) hours this week")
+                                    }
+                                    .padding(.top, 10)
+                                }
                             }
-                        }
-                        .padding()
-                        .background(
-                            RoundedRectangle(cornerRadius: 12)
-                                .fill(Color.black.opacity(0.7))
-                                .shadow(color: Color.purple.opacity(0.3), radius: 5)
-                        )
-                        .onTapGesture {
-                            withAnimation {
-                                expandedFriendID = (expandedFriendID == friend.id) ? nil : friend.id
+                            .padding()
+                            .background(
+                                RoundedRectangle(cornerRadius: 12)
+                                    .fill(Color.black.opacity(0.7))
+                                    .shadow(color: Color.purple.opacity(0.3), radius: 5)
+                            )
+                            .onTapGesture {
+                                withAnimation {
+                                    expandedFriendID = (expandedFriendID == friend.id) ? nil : friend.id
+                                }
                             }
+                            .listRowBackground(Color.clear)
                         }
-                        .listRowBackground(Color.clear)
+                        
                     }
-
                     }
                     .listStyle(PlainListStyle())
                     .scrollContentBackground(.hidden)
                     .searchable(text: $searchText)
                 }
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                
             }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(Color(hex: "191919"))
             .navigationTitle("Friends")
             .navigationBarTitleDisplayMode(.inline)
             .toolbarBackground(Color.black, for: .navigationBar)
             .toolbarBackground(.visible, for: .navigationBar)
             .toolbarColorScheme(.dark, for: .navigationBar)
+            .onAppear {
+                fetchContacts { fetched in
+                    friends = fetched
+                }
+            }
+
             
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
@@ -128,7 +185,7 @@ struct FriendsView: View {
                     .padding()
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .background(Color.black.edgesIgnoringSafeArea(.all))
+                .background(Color(hex: "191919"))
                 .foregroundColor(.white)
             }
             
@@ -193,7 +250,4 @@ struct StatRow: View {
         }
     }
 }
-
-
-
 

@@ -12,16 +12,18 @@ struct MainTabView: View {
                 }
 
             LeaderboardView()
-                .tabItem {
-                    Image(systemName: "trophy")
-                    Text("Leaderboard")
-                }
+                .tabItem { Label("Leaderboard", systemImage: "trophy") }
 
-            FriendsView()
-                .tabItem {
-                    Image(systemName: "person.2")
-                    Text("Friends")
-                }
+//            FriendsListView()
+//                .tabItem {
+//                    Image(systemName: "person.2")
+//                    Text("Friends")
+//                }
+            FindFriendsView()
+                    .tabItem { Label("Find Friends", systemImage: "person.badge.plus") }
+
+                FriendsListView()
+                    .tabItem { Label("Friends", systemImage: "person.2") }
         }
     }
 }

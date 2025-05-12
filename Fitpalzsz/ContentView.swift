@@ -2,26 +2,34 @@
 import SwiftUI
 import Firebase
 import FirebaseCore
-import FirebaseAuth
+import FirebaseAuth 
 import GoogleSignIn
 
-// LOGIN PAGE 
+
+
+// LOGIN PAGE
+
 struct ContentView: View {
     @State private var email = ""
     @State private var password = ""
     @State private var userIsLoggedIn = false
     @State private var errorMessage: String?
+    @StateObject private var friendStore = FriendStore()
     
     let signUpScreen = SignUpView()
     
     var body: some View { 
         if userIsLoggedIn {
+
             MainTabView(userIsLoggedIn:$userIsLoggedIn) // Navigate to the next screen
+                .environmentObject(friendStore)
+            
+
         } else {
             content
         } 
     }
-    
+
     var content: some View {
         NavigationStack {
             VStack {
@@ -85,7 +93,7 @@ struct ContentView: View {
                 .foregroundColor(.white)
                 //.border(Color.gray, width: 2)
                 .cornerRadius(40)
-                .padding(100)
+                .padding(.horizontal, 60)
                 .offset(y: -128)
                 
                 
@@ -137,6 +145,13 @@ struct ContentView: View {
         let config = GIDConfiguration(clientID: clientID)
         GIDSignIn.sharedInstance.configuration = config
         
+        guard let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+                     let rootViewController = windowScene.windows.first?.rootViewController else {
+                   print("No root view controller found")
+                   return
+               }
+        
+        
         // Start the sign-in flow
         GIDSignIn.sharedInstance.signIn(withPresenting: UIApplication.shared.windows.first!.rootViewController!) { result, error in
             guard error == nil else {
@@ -178,15 +193,23 @@ struct SignUpView: View {
         
         
         ZStack {
+
             Color(hex: "191919") // background color to black
                 .edgesIgnoringSafeArea(.all)
+
+            
+
             
             VStack {
                 Image("fitpalz_logo")
                     .resizable()
                     .scaledToFit()
                     .frame(width: 330, height: 330)
+
                     .padding(.top, -40) 
+
+                    //.padding(.top, 55)
+
                 
                 Text("Sign Up")
                     .foregroundColor(.white) 
@@ -196,23 +219,34 @@ struct SignUpView: View {
                 // Sign-up form UI elements
                 TextField("New Email", text: $email)
                     .padding()
-                    .background(Color.gray.opacity(0.2))
+                    .background(Color(red: 0.15, green: 0.15, blue: 0.15))
+                    .foregroundColor(.white)
                     .cornerRadius(40)
-                    .overlay(
+                    .overlay(alignment: .center) {
                         RoundedRectangle(cornerRadius: 40)
-                            .stroke(Color(red: 123/255, green: 106/255, blue: 244/255), lineWidth: 1)
-                    )
+                            .strokeBorder(Color(hex: "7b6af4"), lineWidth: 1)
+                    }
+
                     .padding(.bottom, 8)
+                    .offset(y: -30)
+                    
+                    
+                
+                
                 
                 SecureField("New Password", text: $password)
                     .padding()
-                    .background(Color.gray.opacity(0.2))
+                    .background(Color(red: 0.15, green: 0.15, blue: 0.15))
+                    .foregroundColor(.white)
                     .cornerRadius(40)
-                    .overlay(
+                    .overlay(alignment: .center) {
                         RoundedRectangle(cornerRadius: 40)
-                            .stroke(Color(red: 123/255, green: 106/255, blue: 244/255), lineWidth: 1)
-                    )
-                    .padding(.bottom, 8)
+                            .strokeBorder(Color(hex: "7b6af4"), lineWidth: 1)
+                    }
+
+                    .padding(.bottom, 15)
+                    .offset(y: -30)
+
                 
                 // Display error message if any
                 if let errorMessage = errorMessage {
@@ -226,14 +260,17 @@ struct SignUpView: View {
                 }
                 .padding()
                 .frame(maxWidth: .infinity)
-                .background(Color(red: 0.48, green: 0.41, blue: 0.95))
+                .background(Color(hex: "7b6af4"))
                 .foregroundColor(.white)
-                .cornerRadius(10)
-                .padding(.horizontal, 115)
-                .offset(y: 45)
+                .cornerRadius(40)
+                .padding(.horizontal, 60)
+                .offset(y: 2)
+                
             }
             .padding()
             .foregroundColor(.white) // Set the text color to white for contrast
+            .background(Color(hex: "191919"))
+
         }
         .edgesIgnoringSafeArea(.all)  // Ensures the background covers the entire screen
         .navigationBarTitle("Sign Up", displayMode: .inline)
