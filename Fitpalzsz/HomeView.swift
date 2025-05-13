@@ -131,9 +131,24 @@ struct HomeView: View {
             } 
             .task {
                 
+                //testing xp_system
+                
+                //xp system works. Now need more data from healthkit
+                
+                var user = UserModel()
+                var xpEngine = XPSystem()
+                
+                
                 // All we need to do now is load the data into the xp system
+                var tmp = user
+                let snap = PlayerSnapshot(totalSteps: healthkitEngine.stepCount,
+                                          dailyLoginStreak: 1,
+                                          caloriesToday: 0)
                 
-                
+                print(snap.totalSteps)
+                xpEngine.process(snapshot: snap, user: &tmp)
+                user = tmp
+                //
             }
             
         }

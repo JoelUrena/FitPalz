@@ -53,9 +53,9 @@ struct FitpalzszApp: App {
         requestHealthKitAccess()
         
         //The healthkit stuff should happen here. That way it is ready by the time the app gets to the homescreen
-        healthkitEngine.readStepCountToday()
-        healthkitEngine.readCaloiresBurnedToday()
-        healthkitEngine.readWalkingandRunningDistanceToday()
+        HealthkitEngine.shared.readStepCountToday()
+        HealthkitEngine.shared.readCaloiresBurnedToday()
+        HealthkitEngine.shared.readWalkingandRunningDistanceToday()
         
         
            let appearance = UITabBarAppearance()
@@ -85,7 +85,7 @@ struct FitpalzszApp: App {
     var body: some Scene {
         WindowGroup {
             ContentView()
-                .environmentObject(friendStore).environmentObject(healthkitEngine)
+                .environmentObject(friendStore).environmentObject(HealthkitEngine.shared)
         }
     }  
 }
