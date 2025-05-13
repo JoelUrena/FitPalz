@@ -45,7 +45,7 @@ struct ContactRow: Identifiable {
 }
 
 // Combines address‑book data and UserModel progress
-struct Friend: Identifiable {
+struct FitpalzFriend: Identifiable {
     let id: String            // same as contact.id
     let contact: ContactRow
     var user: UserModel
@@ -53,7 +53,7 @@ struct Friend: Identifiable {
 
 @MainActor
 final class FriendStore: ObservableObject {
-    @Published private(set) var friends: [Friend] = []
+    @Published private(set) var friends: [FitpalzFriend] = []
     
     /// Signed‑in user’s own profile (updated by XPSystem after login)
     @Published var currentUser: UserModel = UserModel()
@@ -64,7 +64,7 @@ final class FriendStore: ObservableObject {
         var user = UserModel()
         user.totalXP = 0
         user.unlockIDs = [contact.id]
-        friends.append(Friend(id: contact.id, contact: contact, user: user))
+        friends.append(FitpalzFriend(id: contact.id, contact: contact, user: user))
     }
 
     /// Check if a phone number is already in the friends list
@@ -201,7 +201,7 @@ struct MessageComposer: UIViewControllerRepresentable {
             didFinishWith result: MessageComposeResult) {
             controller.dismiss(animated: true)
         }
-    }
+    } 
 }
 
 // MARK: - Find Friends View
@@ -211,42 +211,67 @@ struct FindFriendsView: View {
     @State private var showSMS: ContactRow? = nil
     
     var body: some View {
-        Group {
-            if manager.permissionDenied {
-                Text("It appears you haven’t given FitPalz permission to access your contacts.\nGo to Settings ➜ FitPalz ➜ Contacts.")
-                    .multilineTextAlignment(.center).padding()
-            } else if manager.noContacts {
-                Text("It appears you don't have any contacts.")
-            } else {
-                let availableOn = manager.onFitpalz.filter { !friendStore.isFriend($0.phone) }
-                let availableInvite = manager.invitePalz.filter { !friendStore.isFriend($0.phone) }
-                
-                List {
-                    if !availableOn.isEmpty {
-                        Section("On FitPalz") {
-                            ForEach(availableOn) { c in
-                                ContactCell(contact: c, actionTitle: "ADD") {
-                                    friendStore.add(contact: c)
-                                    // Remove the contact from the local On‑FitPalz list so it disappears after adding
-                                    if let idx = manager.onFitpalz.firstIndex(where: { $0.id == c.id }) {
-                                        manager.onFitpalz.remove(at: idx)
-                                    }
-                                    if let idx2 = manager.invitePalz.firstIndex(where: { $0.id == c.id }) {
-                                        manager.invitePalz.remove(at: idx2)
-                                    }
-                                }
+        ZStack{
+            Color(hex: "191919") 
+                .ignoresSafeArea()
+            
+            Group {
+                if manager.permissionDenied {
+                    Text("It appears you haven’t given FitPalz permission to access your contacts.\nGo to Settings ➜ FitPalz ➜ Contacts.")
+                        .multilineTextAlignment(.center).padding()
+                } else if manager.noContacts {
+                    Text("It appears you don't have any contacts.")
+                } else {
+                    let availableOn = manager.onFitpalz.filter { !friendStore.isFriend($0.phone) }
+                    let availableInvite = manager.invitePalz.filter { !friendStore.isFriend($0.phone) }
+                    
+                    List {
+                        if !availableOn.isEmpty {
+                               Section {
+                                   ForEach(availableOn) { c in
+                                       ContactCell(contact: c, actionTitle: "ADD") {
+                                           friendStore.add(contact: c)
+                                           if let idx = manager.onFitpalz.firstIndex(where: { $0.id == c.id }) {
+                                               manager.onFitpalz.remove(at: idx)
+                                           }
+                                           if let idx2 = manager.invitePalz.firstIndex(where: { $0.id == c.id }) {
+                                               manager.invitePalz.remove(at: idx2)
+                                           }
+                                       }
+                                       .listRowBackground(Color.clear)
+                                   }
+                               } header: {
+                                   Text("On FitPalz")
+                                       .foregroundColor(.gray)
+                                       .padding(.top, 8)
+                                       .padding(.bottom, 4)
+                                       .background(Color(hex: "191919"))
+                               }
+                               .listRowBackground(Color.clear)
+                           }
+
+                           if !availableInvite.isEmpty {
+                               Section {
+                                   ForEach(availableInvite) { c in
+                                       ContactCell(contact: c, actionTitle: "INVITE") {
+                                           showSMS = c
+                                       }
+                                       .listRowBackground(Color.clear)
+                                   }
+                               } header: {
+                                   Text("Invite Palz")
+                                       .foregroundColor(.gray)
+                                       .padding(.top, 8)
+                                       .padding(.bottom, 4)
+                                       .background(Color(hex: "191919"))
                             }
+                            .listRowBackground(Color.clear)
                         }
                     }
-                    if !availableInvite.isEmpty {
-                        Section("Invite Palz") {
-                            ForEach(availableInvite) { c in
-                                ContactCell(contact: c, actionTitle: "INVITE") {
-                                    showSMS = c
-                                }
-                            }
-                        }
-                    }
+                    .listStyle(.plain)
+                    .scrollContentBackground(.hidden)
+                    .listSectionSeparator(.hidden)
+                    .background(Color.clear)
                 }
             }
         }
@@ -287,15 +312,31 @@ private struct ContactCell: View {
             }
             VStack(alignment: .leading) {
                 Text(contact.name)
-                Text(contact.phone).font(.caption).foregroundStyle(.secondary)
+                    .foregroundColor(.white)
+                    .font(.headline)
+                
+                Text(contact.phone) 
+                    .font(.caption)
+                    .foregroundColor(.gray)
+                
                 if let username = contact.username {
-                    Text(username).font(.caption2).foregroundStyle(.yellow)
+                    Text(username)
+                        .font(.caption2)
+                        .foregroundColor(.yellow)
                 }
             }
             Spacer()
             Button(actionTitle, action: action)
+                .foregroundColor(.white)
                 .buttonBorderShape(.capsule)
         }
+        .padding(.vertical,8)
+        .background(
+            RoundedRectangle(cornerRadius: 12)
+                .fill(Color.black.opacity(0.7))
+                .shadow(color: Color.purple.opacity(0.3), radius: 5)
+        )
+        .listRowInsets(EdgeInsets())
     }
 }
 
