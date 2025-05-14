@@ -57,6 +57,10 @@ struct FitpalzszApp: App {
         HealthkitEngine.shared.readCaloiresBurnedToday()
         HealthkitEngine.shared.readWalkingandRunningDistanceToday()
         
+        //lifetime functions
+        HealthkitEngine.shared.readLifetimeSteps()
+        HealthkitEngine.shared.readLifetimeDistance()
+        
         
            let appearance = UITabBarAppearance()
            appearance.configureWithOpaqueBackground()
