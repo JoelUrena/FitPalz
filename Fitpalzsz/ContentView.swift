@@ -1,40 +1,40 @@
+//Zayn
 
 import SwiftUI
 import Firebase
 import FirebaseCore
-import FirebaseAuth 
+import FirebaseAuth
 import GoogleSignIn
+import FirebaseFirestore
 
-
-
-// LOGIN PAGE
-
+// MARK: - LOGIN PAGE
 struct ContentView: View {
     @State private var email = ""
     @State private var password = ""
     @State private var userIsLoggedIn = false
     @State private var errorMessage: String?
+    @State private var showVerifyMessage = false
     @StateObject private var friendStore = FriendStore()
     @EnvironmentObject private var healthkitEngine: HealthkitEngine
     
     let signUpScreen = SignUpView()
     
-    var body: some View { 
+    var body: some View {
         if userIsLoggedIn {
-
             MainTabView(userIsLoggedIn:$userIsLoggedIn) // Navigate to the next screen
                 .environmentObject(friendStore).environmentObject(healthkitEngine)
             
-
+//        if userIsLoggedIn {
+//            Xp_System()  // Trigger XP processing
         } else {
             content
-        } 
+        }
     }
-
+    
     var content: some View {
         NavigationStack {
             VStack {
-                Image("fitpalz_logo")
+                Image("logo")
                     .resizable()
                     .scaledToFit()
                     .frame(width: 330, height: 330)
@@ -45,35 +45,34 @@ struct ContentView: View {
                     .offset(y: -55)
                     .font(.system(size: 31, weight: .bold))
                 
-                // Email TextField
                 TextField("Email", text: $email)
                     .padding()
-                    .textFieldStyle(PlainTextFieldStyle())
-                    .background(Color(red: 0.15, green: 0.15, blue: 0.15))
+                    .textFieldStyle(.plain)
+                    .background(Color(red: 0.1, green: 0.1, blue: 0.1))
                     .foregroundColor(.white)
-                    .cornerRadius(40)
-                    .overlay(
-                         RoundedRectangle(cornerRadius: 40)
-                             .strokeBorder(Color(hex: "7b6af4"), lineWidth: 2)
-                    )
-                    .padding(.bottom, 15)
-                    .offset(y: -30)
+                    .border(Color(red: 123/255, green: 106/255, blue: 244/255), width: 0.6)
+                    .cornerRadius(2)
+                    .padding(.bottom, 8)
+                    .offset(y: -35)
                 
-                // Password SecureField
                 SecureField("Password", text: $password)
                     .padding()
                     .textFieldStyle(PlainTextFieldStyle())
-                    .background(Color(red: 0.15, green: 0.15, blue: 0.15))
-                    .foregroundColor(.white)
-                    .cornerRadius(40)
-                    .overlay(
-                         RoundedRectangle(cornerRadius: 40)
-                             .strokeBorder(Color(hex: "7b6af4"), lineWidth: 2)
-                    )
+                    .background(Color(red: 0.1, green: 0.1, blue: 0.1))
+                    .foregroundColor(.blue)
+                    .border(Color(red: 123/255, green: 106/255, blue: 244/255), width: 0.6)
+                    .cornerRadius(2)
                     .padding(.bottom, 15)
                     .offset(y: -30)
                 
-                // Sign In Button
+                if let error = errorMessage {
+                    Text(error)
+                        .foregroundColor(.red)
+                        .multilineTextAlignment(.center)
+                        .padding(.bottom, 10)
+                        .offset(y: -25)
+                }
+                
                 Button("Sign In") {
                     login()
                 }
@@ -84,229 +83,299 @@ struct ContentView: View {
                 .cornerRadius(10)
                 .offset(y: -30)
                 
-                // Google Sign-In Button
                 Button("Sign In with Google") {
                     googleSignIn()
                 }
                 .padding()
                 .frame(maxWidth: .infinity)
-                .background(Color(hex: "7b6af4"))
+                .background(Color(red: 0.48, green: 0.41, blue: 0.95))
                 .foregroundColor(.white)
-                //.border(Color.gray, width: 2)
-                .cornerRadius(40)
-                .padding(.horizontal, 60)
+                .border(Color.gray, width: 2)
+                .cornerRadius(4)
+                .padding(100)
                 .offset(y: -128)
                 
-                
-                //Sign up button
-                NavigationLink("Don't have an account? Sign Up!") { 
+                NavigationLink("Don't have an account? Sign Up!") {
                     signUpScreen
-                }.padding()
-                    .font(.system(size: 17, weight: .bold))
-                    .underline(true, color: .blue)
-                    .frame(maxWidth: .infinity)
-                    .foregroundColor(.blue)
-                    .cornerRadius(10) 
-                    .offset(y: -199)
-                
-                
+                }
+                .padding()
+                .font(.system(size: 17, weight: .bold))
+                .underline(true, color: .blue)
+                .frame(maxWidth: .infinity)
+                .foregroundColor(.blue)
+                .cornerRadius(10)
+                .offset(y: -199)
                 .padding(.horizontal, 20)
-                Spacer()
-                .frame(width: 350) 
                 
-                .onAppear {
-                    Auth.auth().addStateDidChangeListener { auth, user in
-                        userIsLoggedIn = (user != nil)
-                        
+                Spacer()
+                    .frame(width: 350)
+                
+                // (Email Verification Button)
+                if showVerifyMessage {
+                    Button("Resend Verification Email") {
+                        resendVerificationEmail()
+                    }
+                    .font(.system(size: 20))
+                    .padding()
+                    .frame(maxWidth: .infinity)
+                    .background(Color.red)
+                    .foregroundColor(.white)
+                    .cornerRadius(10)
+                    .offset(y: -30)
+                }
+            }
+            .background(Color.black)
+            .edgesIgnoringSafeArea(.all)
+            .onAppear {
+                Auth.auth().addStateDidChangeListener { auth, user in
+                    if let user = user {
+                        user.reload { _ in
+                            self.userIsLoggedIn = user.isEmailVerified
+                            if !user.isEmailVerified {
+                                showVerifyMessage = true // Show resend button if not verified
+                            } else {
+                                showVerifyMessage = false // Hide if verified
+                            }
+                        }
                     }
                 }
-}
-            .background(Color(hex: "191919"))
-            .edgesIgnoringSafeArea(.all) // Make the background cover the entire screen
+            }
         }
     }
-    
+    // MARK: - LOGIN/EMAIL VERIFICATION
     func login() {
-            Auth.auth().signIn(withEmail: email, password: password) { result, error in
+        Auth.auth().signIn(withEmail: email, password: password) { result, error in
+            if let error = error {
+                errorMessage = error.localizedDescription
+                return
+            }
+            guard let user = result?.user else { return }
+            user.reload { error in
                 if let error = error {
                     errorMessage = error.localizedDescription
                     return
                 }
+                if user.isEmailVerified {
+                    let db = Firestore.firestore()
+                        if let uid = user.uid as String? {
+                            db.collection("users").document(uid).updateData([
+                                "accountStatus": "verified"
+                            ]) { error in
+                                if let error = error {
+                                    print("Failed to update accountStatus: \(error.localizedDescription)")
+                                } else {
+                                    print("accountStatus updated to verified.")
+                                }
+                            }
+                        }
 
-                // Handle successful login
-                userIsLoggedIn = true  // Update login state
-                print("User logged in successfully")
+                        userIsLoggedIn = true
+                        showVerifyMessage = false
+                } else {
+                    errorMessage = "Please verify your email before continuing."
+                    showVerifyMessage = true
+                    try? Auth.auth().signOut()
+                }
             }
         }
+    }
     
+    func resendVerificationEmail() {
+        Auth.auth().currentUser?.sendEmailVerification { error in
+            if let error = error {
+                errorMessage = "Failed to resend email: \(error.localizedDescription)"
+            } else {
+                errorMessage = "Verification email sent!"
+            }
+        }
+    }
+    // MARK: - GOOGLE SIGN IN
     func googleSignIn() {
         guard let clientID = FirebaseApp.app()?.options.clientID else { return }
-        
-        // Create Google Sign In configuration object
         let config = GIDConfiguration(clientID: clientID)
         GIDSignIn.sharedInstance.configuration = config
         
-        guard let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
-                     let rootViewController = windowScene.windows.first?.rootViewController else {
-                   print("No root view controller found")
-                   return
-               }
+        guard let rootViewController = UIApplication.shared.connectedScenes
+            .compactMap({ $0 as? UIWindowScene })
+            .first?.windows.first?.rootViewController else {
+            print("No root view controller found.")
+            return
+        }
         
-        
-        // Start the sign-in flow
-        GIDSignIn.sharedInstance.signIn(withPresenting: UIApplication.shared.windows.first!.rootViewController!) { result, error in
+        GIDSignIn.sharedInstance.signIn(withPresenting: rootViewController) { result, error in
             guard error == nil else {
                 print("Google Sign-In error: \(error!.localizedDescription)")
                 return
             }
-            
             guard let user = result?.user,
                   let idToken = user.idToken?.tokenString else {
                 return
             }
-            
             let credential = GoogleAuthProvider.credential(withIDToken: idToken, accessToken: user.accessToken.tokenString)
-            
-            // Sign in with Firebase
             Auth.auth().signIn(with: credential) { result, error in
                 if let error = error {
                     print("Firebase Sign-In error: \(error.localizedDescription)")
                     return
                 }
-                
-                userIsLoggedIn = true
-                print("User signed in with Google successfully")
+                guard let firebaseUser = result?.user else { return }
+                let db = Firestore.firestore()
+                let docRef = db.collection("users").document(firebaseUser.uid)
+                docRef.getDocument { document, error in
+                    if let document = document, document.exists {
+                        print("User already exists in Firestore.")
+                    } else {
+                        let firstName = firebaseUser.displayName ?? "New User"
+                        let email = firebaseUser.email ?? ""
+                        let userData: [String: Any] = [
+                            "firstName": firstName,
+                            "email": email,
+                            "uid": firebaseUser.uid,
+                            "signUpDate": FieldValue.serverTimestamp(),
+                            "provider": "google"
+                        ]
+                        db.collection("users").document(firebaseUser.uid).setData(userData) { error in
+                            if let error = error {
+                                print("Firestore save error: \(error.localizedDescription)")
+                            } else {
+                                print("User saved to Firestore via Google Sign-In.")
+                            }
+                        }
+                    }
+                    userIsLoggedIn = true
+                }
             }
         }
     }
 }
 
-// SIGNUP PAGE
+// MARK: - SIGN UP PAGE
+// SIGNUP PAGE WITH EMAIL VERIFICATION
 struct SignUpView: View {
     @State private var firstName = ""
-    @State private var lastName = ""
     @State private var email = ""
     @State private var password = ""
     @State private var confirmPassword = ""
     @State private var errorMessage: String?
     
     var body: some View {
-        
-        
-        ZStack {
-
-            Color(hex: "191919") // background color to black
-                .edgesIgnoringSafeArea(.all)
-            
-            VStack {
-                Image("fitpalz_logo")
-                    .resizable()
-                    .scaledToFit()
-                    .frame(width: 330, height: 330)
-
-                    .padding(.top, -40) 
-
-                    //.padding(.top, 55)
-
+        NavigationStack {
+            VStack(spacing: 20) {
+                Text("Create Account")
+                    .font(.largeTitle)
+                    .bold()
                 
-                Text("Sign Up")
-                    .foregroundColor(.white) 
-                    .offset(y: -35)
-                    .font(.system(size: 31, weight: .bold)) 
-                
-                // Sign-up form UI elements
-                TextField("New Email", text: $email)
+                TextField("First Name", text: $firstName)
                     .padding()
-                    .background(Color(red: 0.15, green: 0.15, blue: 0.15))
-                    .foregroundColor(.white)
-                    .cornerRadius(40)
-                    .overlay(alignment: .center) {
-                        RoundedRectangle(cornerRadius: 40)
-                            .strokeBorder(Color(hex: "7b6af4"), lineWidth: 1)
-                    }
-
-                    .padding(.bottom, 8)
-                    .offset(y: -30)
-                    
+                    .background(Color(.secondarySystemBackground))
+                    .cornerRadius(8)
                 
-                SecureField("New Password", text: $password)
+                TextField("Email", text: $email)
+                    .keyboardType(.emailAddress)
+                    .autocapitalization(.none)
                     .padding()
-                    .background(Color(red: 0.15, green: 0.15, blue: 0.15))
-                    .foregroundColor(.white)
-                    .cornerRadius(40)
-                    .overlay(alignment: .center) {
-                        RoundedRectangle(cornerRadius: 40)
-                            .strokeBorder(Color(hex: "7b6af4"), lineWidth: 1)
-                    }
-
-                    .padding(.bottom, 15)
-                    .offset(y: -30)
-
+                    .background(Color(.secondarySystemBackground))
+                    .cornerRadius(8)
                 
-                // Display error message if any
-                if let errorMessage = errorMessage {
-                    Text(errorMessage)
+                SecureField("Password", text: $password)
+                    .padding()
+                    .background(Color(.secondarySystemBackground))
+                    .cornerRadius(8)
+                
+                SecureField("Confirm Password", text: $confirmPassword)
+                    .padding()
+                    .background(Color(.secondarySystemBackground))
+                    .cornerRadius(8)
+                
+                if let error = errorMessage {
+                    Text(error)
                         .foregroundColor(.red)
-                        .padding(.bottom, 15)
                 }
                 
                 Button("Sign Up") {
-                    signUp() 
+                    signUp()
                 }
                 .padding()
                 .frame(maxWidth: .infinity)
-                .background(Color(hex: "7b6af4"))
+                .background(Color.blue)
                 .foregroundColor(.white)
-                .cornerRadius(40)
-                .padding(.horizontal, 60)
-                .offset(y: 2)
+                .cornerRadius(8)
                 
+                Spacer()
             }
             .padding()
-            .foregroundColor(.white) // Set the text color to white for contrast
-            .background(Color(hex: "191919"))
-
+            .background(Color.black.edgesIgnoringSafeArea(.all))
         }
-        .edgesIgnoringSafeArea(.all)  // Ensures the background covers the entire screen
-        .navigationBarTitle("Sign Up", displayMode: .inline)
     }
-    
+    // MARK: - SIGN UP
     func signUp() {
-        
-        //might need to be an optional value in the future
-        guard password != "" else {
+        guard password == confirmPassword else {
             errorMessage = "Passwords do not match."
             return
         }
-        
+        if let validationError = isValidPassword(password) {
+            errorMessage = validationError
+            return
+        }
         Auth.auth().createUser(withEmail: email, password: password) { result, error in
             if let error = error {
-                errorMessage = error.localizedDescription
+                self.errorMessage = error.localizedDescription
                 return
             }
-            
-            let changeRequest = Auth.auth().currentUser?.createProfileChangeRequest()
-            changeRequest?.displayName = "\(firstName) \(lastName)"
-            changeRequest?.commitChanges { error in
+            result?.user.sendEmailVerification { error in
                 if let error = error {
-                    print("Error saving name: \(error.localizedDescription)")
+                    print("Failed to send email verification: \(error.localizedDescription)")
                 } else {
-                    print("Name saved successfully!")
+                    print("Verification email sent!")
                 }
             }
-            
-            print("User signed up successfully.")
-        } 
+            saveUserToFirestore()
+        }
+    }
+    // MARK: - STORING TO FIREBASE
+    func saveUserToFirestore() {
+        guard let user = Auth.auth().currentUser else { return }
+        let db = Firestore.firestore()
+        let userData: [String: Any] = [
+            "firstName": firstName,
+            "email": user.email ?? "",
+            "uid": user.uid,
+            "signUpDate": FieldValue.serverTimestamp(),
+            "accountStatus": Auth.auth().currentUser?.isEmailVerified == true ? "verified" : "pending_verification"
+        ]
+        db.collection("users").document(user.uid).setData(userData) { error in
+            if let error = error {
+                print("Firestore error: \(error.localizedDescription)")
+            }
+        }
+    }
+    // MARK: - PASSWORD CHECKS
+    func isValidPassword(_ password: String) -> String? {
+        if password.count < 8 {
+            return "Password must be at least 8 characters."
+        }
+        if password.count > 24 {
+            return "Password must be no more than 24 characters."
+        }
+        let upper = ".*[A-Z]+.*"
+        let lower = ".*[a-z]+.*"
+        let special = ".*[^A-Za-z0-9]+.*"
+        if !NSPredicate(format: "SELF MATCHES %@", upper).evaluate(with: password) {
+            return "Password must include at least one uppercase letter."
+        }
+        if !NSPredicate(format: "SELF MATCHES %@", lower).evaluate(with: password) {
+            return "Password must include at least one lowercase letter."
+        }
+        if !NSPredicate(format: "SELF MATCHES %@", special).evaluate(with: password) {
+            return "Password must include at least one special character."
+        }
+        return nil
     }
 }
-
+// MARK: - PREVIEW
 struct ContentView_Previews: PreviewProvider {
     static var previews: some View {
         Group {
-            // Preview for ContentView (Login)
             ContentView()
-            
-            // Preview for SignUpView
             SignUpView()
         }
     }
