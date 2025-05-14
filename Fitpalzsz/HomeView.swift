@@ -141,6 +141,8 @@ struct HomeView: View {
                 
                 // All we need to do now is load the data into the xp system
                 var tmp = user
+                
+                //healthkit engine data goes here
                 let snap = PlayerSnapshot(totalSteps: healthkitEngine.stepCount,
                                           dailyLoginStreak: 1,
                                           caloriesToday: 0)

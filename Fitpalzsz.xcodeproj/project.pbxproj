@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		51178DD02DD427E000D979B4 /* FirebaseFirestore in Frameworks */ = {isa = PBXBuildFile; productRef = 51178DCF2DD427E000D979B4 /* FirebaseFirestore */; };
 		51DC55C82D9B2FC40010E953 /* FirebaseAnalytics in Frameworks */ = {isa = PBXBuildFile; productRef = 51DC55C72D9B2FC40010E953 /* FirebaseAnalytics */; };
 		51DC55CA2D9B2FC40010E953 /* FirebaseAnalyticsOnDeviceConversion in Frameworks */ = {isa = PBXBuildFile; productRef = 51DC55C92D9B2FC40010E953 /* FirebaseAnalyticsOnDeviceConversion */; };
 		51DC55CC2D9B2FC40010E953 /* FirebaseAnalyticsWithoutAdIdSupport in Frameworks */ = {isa = PBXBuildFile; productRef = 51DC55CB2D9B2FC40010E953 /* FirebaseAnalyticsWithoutAdIdSupport */; };
@@ -81,6 +82,7 @@
 				51DC55D52D9B31180010E953 /* GoogleSignInSwift in Frameworks */,
 				51DC55D02D9B2FC40010E953 /* FirebaseAppDistribution-Beta in Frameworks */,
 				51DC55CC2D9B2FC40010E953 /* FirebaseAnalyticsWithoutAdIdSupport in Frameworks */,
+				51178DD02DD427E000D979B4 /* FirebaseFirestore in Frameworks */,
 				51DC55CA2D9B2FC40010E953 /* FirebaseAnalyticsOnDeviceConversion in Frameworks */,
 				51DC55D32D9B31180010E953 /* GoogleSignIn in Frameworks */,
 				51DC55D82D9B32920010E953 /* FirebaseAuth in Frameworks */,
@@ -160,6 +162,7 @@
 				51DC55D22D9B31180010E953 /* GoogleSignIn */,
 				51DC55D42D9B31180010E953 /* GoogleSignInSwift */,
 				51DC55D72D9B32920010E953 /* FirebaseAuth */,
+				51178DCF2DD427E000D979B4 /* FirebaseFirestore */,
 			);
 			productName = Fitpalzsz;
 			productReference = B31B65EA2D924D8600897EDA /* Fitpalzsz.app */;
@@ -641,6 +644,11 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
+		51178DCF2DD427E000D979B4 /* FirebaseFirestore */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 51DC55C62D9B2FC40010E953 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseFirestore;
+		};
 		51DC55C72D9B2FC40010E953 /* FirebaseAnalytics */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = 51DC55C62D9B2FC40010E953 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
