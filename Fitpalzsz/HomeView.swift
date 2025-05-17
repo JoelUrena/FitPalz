@@ -137,6 +137,7 @@ struct HomeView: View {
                 print(healthkitEngine.sleepTimePreviousNight/3600)
                 print(healthkitEngine.lifetimeCaloriesBurned)
                 print("Time in daylight: \(healthkitEngine.timeinDaylightToday)")
+                print(healthkitEngine.lifetimeFlightsClimbed)
                 
             }
             

@@ -17,8 +17,10 @@ class HealthkitEngine: ObservableObject {
     //this is to update the view
     @Published var stepCount: Int = 0
     @Published var lifeTimeStepCount: Int = 0
+    
     @Published var caloriesBurned: Double = 0.0
     @Published var lifetimeCaloriesBurned: Double = 0.0
+    
     @Published var walkingRunningDistance: Double = 0.0
     @Published var lifetimeDistance: Double = 0.0
     
@@ -26,6 +28,9 @@ class HealthkitEngine: ObservableObject {
     @Published var timeinDaylightLifetime: Int = 0
     
     @Published var sleepTimePreviousNight: Double = 0
+    
+    @Published var flightsClimbed: Int = 0
+    @Published var lifetimeFlightsClimbed: Int = 0
     
     func readStepCountToday() {
         guard let stepCountType = HKQuantityType.quantityType(forIdentifier: .stepCount) else {
@@ -315,7 +320,7 @@ class HealthkitEngine: ObservableObject {
             }
             
             DispatchQueue.main.async {
-                let timeInDaylight = Int(sum.doubleValue(for: HKUnit.count()))
+                let timeInDaylight = Int(sum.doubleValue(for: HKUnit.minute()))
                 self.timeinDaylightLifetime = timeInDaylight
             }
             
@@ -387,6 +392,90 @@ class HealthkitEngine: ObservableObject {
         healthStore.execute(query)
     }
     
+    func readFlightsClimbed() {
+        guard let flightsType = HKQuantityType.quantityType(forIdentifier: .flightsClimbed) else {
+            return
+        }
+        
+        var dayBefore: Date {
+            return Calendar.current.date(byAdding: .day, value: -1, to: .now)!
+        }
+        
+        let now = Date()
+        let startDate = Calendar.current.startOfDay(for: now)
+        let predicate = HKQuery.predicateForSamples(
+            withStart: startDate,
+            end: now,
+            options: .strictStartDate
+        )
+        
+        let query = HKStatisticsQuery(
+            quantityType: flightsType,
+            quantitySamplePredicate: predicate,
+            options: .cumulativeSum
+        ) {
+            _, result, error in
+            guard let result = result, let sum = result.sumQuantity() else {
+                print("failed to read step count: \(error?.localizedDescription ?? "UNKNOWN ERROR")")
+                return
+            }
+            //all the healthkit stuff happens on a background thread. need to fix this.
+            
+            //changes must be published on the main thread. there has to be a better way to do this
+            DispatchQueue.main.async {
+                let flights = Int(sum.doubleValue(for: HKUnit.count()))
+                self.flightsClimbed = flights
+            }
+            
+            
+        }
+        
+        self.healthStore.execute(query)
+        
+    }
+    
+    func readLifeTimeFlightsClimbed() {
+        guard let flightsType = HKQuantityType.quantityType(forIdentifier: .flightsClimbed) else {
+            return
+        }
+        
+        var dayBefore: Date {
+            return Calendar.current.date(byAdding: .day, value: -1, to: .now)!
+        }
+        
+        let now = Date()
+        let startDate = Calendar.current.startOfDay(for: .distantPast)
+        let predicate = HKQuery.predicateForSamples(
+            withStart: startDate,
+            end: now,
+            options: .strictStartDate
+        )
+        
+        let query = HKStatisticsQuery(
+            quantityType: flightsType,
+            quantitySamplePredicate: predicate,
+            options: .cumulativeSum
+        ) {
+            _, result, error in
+            guard let result = result, let sum = result.sumQuantity() else {
+                print("failed to read step count: \(error?.localizedDescription ?? "UNKNOWN ERROR")")
+                return
+            }
+            //all the healthkit stuff happens on a background thread. need to fix this.
+            
+            //changes must be published on the main thread. there has to be a better way to do this
+            DispatchQueue.main.async {
+                let flights = Int(sum.doubleValue(for: HKUnit.count()))
+                self.lifetimeFlightsClimbed = flights
+            }
+            
+            
+        }
+        
+        self.healthStore.execute(query)
+    }
+    
+    
     func readAllData() {
         
         readLifetimeSteps()
@@ -398,6 +487,8 @@ class HealthkitEngine: ObservableObject {
         readTimeInDaylightToday()
         readSleepDataPreviousNight()
         readWalkingandRunningDistanceToday()
+        readFlightsClimbed()
+        readLifeTimeFlightsClimbed()
         
     }
     

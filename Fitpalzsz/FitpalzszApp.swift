@@ -52,17 +52,6 @@ struct FitpalzszApp: App {
         healthStore = HKHealthStore()
         requestHealthKitAccess()
         
-        //The healthkit stuff should happen here. That way it is ready by the time the app gets to the homescreen
-        HealthkitEngine.shared.readStepCountToday()
-        HealthkitEngine.shared.readCaloiresBurnedToday()
-        HealthkitEngine.shared.readWalkingandRunningDistanceToday()
-        HealthkitEngine.shared.readSleepDataPreviousNight()
-        HealthkitEngine.shared.readTimeInDaylightToday()
-        
-        //lifetime functions
-        HealthkitEngine.shared.readLifetimeSteps()
-        HealthkitEngine.shared.readLifetimeDistance()
-        HealthkitEngine.shared.readlifeTimeCaloriesBurned()
         
         let appearance = UITabBarAppearance()
         appearance.configureWithOpaqueBackground()
@@ -80,10 +69,19 @@ struct FitpalzszApp: App {
     //healthkit permissions
     private func requestHealthKitAccess() {
         
-        let samples = Set([HKObjectType.quantityType(forIdentifier: .stepCount)!,HKObjectType.quantityType(forIdentifier: .distanceWalkingRunning)!,HKObjectType.quantityType(forIdentifier:  .activeEnergyBurned)!,HKObjectType.quantityType(forIdentifier:  .timeInDaylight)!,HKObjectType.categoryType(forIdentifier: .sleepAnalysis)!])
+        let samples = Set([HKObjectType.quantityType(forIdentifier: .stepCount)!,HKObjectType.quantityType(forIdentifier: .distanceWalkingRunning)!,HKObjectType.quantityType(forIdentifier:  .activeEnergyBurned)!,HKObjectType.quantityType(forIdentifier:  .timeInDaylight)!,HKObjectType.categoryType(forIdentifier: .sleepAnalysis)!,HKObjectType.quantityType(forIdentifier: .flightsClimbed)!])
         
         healthStore.requestAuthorization(toShare: nil, read: samples) { success, error in
-            print("Request Authorization -- Success: ", success, " Error: ", error ?? "nil")
+            
+            //only read data if authorization is given
+            if success {
+                HealthkitEngine.shared.readAllData()
+            }
+            
+            else {
+                print("Request Authorization -- Success: ", success, " Error: ", error ?? "nil")
+            }
+            
         }
         
     }
