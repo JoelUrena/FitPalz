@@ -11,19 +11,19 @@ extension Color {
         (r, g, b) = (
             (int >> 16) & 0xFF,
             (int >> 8) & 0xFF,
-            int & 0xFF 
+            int & 0xFF
         )
         
         self.init(
             .sRGB,
             red: Double(r) / 255,
-            green: Double(g) / 255,  
+            green: Double(g) / 255,
             blue: Double(b) / 255,
             opacity: 1
         )
     }
 }
- 
+
 
 
 struct HomeView: View {
@@ -34,16 +34,16 @@ struct HomeView: View {
     @EnvironmentObject private var healthkitEngine: HealthkitEngine
     
     
-
+    
     let statsData: [StatItem] = [
         StatItem(label: "Calories Burned", value: "", icon: "flame.fill", details: "You burned 0.0 kcal today! Keep up the good work!", type: statType.caloriesBurned),
         StatItem(label: "Steps Taken", value: "", icon: "figure.walk.motion", details: "You’ve taken 0.0 steps! That’s an amazing effort!",type: statType.stepCount),
         StatItem(label: "Distance", value: "7.2 miles", icon: "shoeprints.fill", details: "You covered 0.0 miles today. Stay active!",type: statType.distance),
         StatItem(label: "Challenges", value: "30% complete", icon: "trophy", details: "You’ve completed 30% of your challenges. Keep pushing forward!", type: .none),
-        StatItem(label: "Sleep", value: "40 hours", icon: "bed.double.fill", details: "You’ve accumulated 40 hours of sleep this week. Aim for consistency!", type: .none)
-       
+        StatItem(label: "Sleep", value: "40 hours", icon: "bed.double.fill", details: "You’ve accumulated 40 hours of sleep this week. Aim for consistency!", type: statType.sleep)
+        
     ]
-
+    
     var body: some View {
         
         NavigationStack {
@@ -128,29 +128,16 @@ struct HomeView: View {
                             .accessibilityLabel("Sign Out")
                     }
                 }
-            } 
+            }
             .task {
                 
-                //testing xp_system
+                //MARK: - this is how data is accessed from the healthkit class. The sleep metric is in second so we'll have to convert it to hours or minutes depending on what we need exactly
                 
-                //xp system works. Now need more data from healthkit
+                print(healthkitEngine.lifeTimeStepCount)
+                print(healthkitEngine.sleepTimePreviousNight/3600)
+                print(healthkitEngine.lifetimeCaloriesBurned)
+                print("Time in daylight: \(healthkitEngine.timeinDaylightToday)")
                 
-                var user = UserModel()
-                var xpEngine = XPSystem()
-                
-                
-                // All we need to do now is load the data into the xp system
-                var tmp = user
-                
-                //healthkit engine data goes here
-                let snap = PlayerSnapshot(totalSteps: healthkitEngine.stepCount,
-                                          dailyLoginStreak: 1,
-                                          caloriesToday: 0)
-                
-                print(snap.totalSteps)
-                xpEngine.process(snapshot: snap, user: &tmp)
-                user = tmp
-                //
             }
             
         }
@@ -162,8 +149,6 @@ struct HomeView: View {
             try Auth.auth().signOut()  // Sign the user out from Firebase
             userIsLoggedIn = false     // Update the login state to false
             
-            
-            
             // Navigate back to the login/signup screen
             // We don't need to explicitly handle navigation in this view
             // because the `userIsLoggedIn` state in ContentView controls it
@@ -174,13 +159,13 @@ struct HomeView: View {
     
 }
 
-
 //enum to make it easier to determine between stat types
 enum statType {
-
+    
     case stepCount
     case caloriesBurned
     case distance
+    case sleep
     case none
     
     
