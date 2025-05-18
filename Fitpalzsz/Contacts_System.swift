@@ -19,19 +19,21 @@
 @preconcurrency import ContactsUI
 import SwiftUI
 import MessageUI
+import FirebaseFirestore
+import FirebaseAuth
 
 // MARK: - Mock Firebase registry of phone numbers already on FitPalz
 // These came from the test device’s “iPhone contacts.vcf”.
-let ContactsOnFitpalz: Set<String> = [
-    "+15554395270", // (555)‑439‑5270
-    "+15557243583", // 555‑724‑3583
-    "+15555291552", // 555‑529‑1552
-    "+15556171812", // 555‑617‑1812
-    "+15556485472", // 555‑648‑5472
-    "+15555431928", // 555‑543‑1928
-    "+13015552312", // (301)‑555‑2312
-    "+15555187001"  // 555‑518‑7001
-]
+//let ContactsOnFitpalz: Set<String> = [
+//    "+15554395270", // (555)‑439‑5270
+//    "+15557243583", // 555‑724‑3583
+//    "+15555291552", // 555‑529‑1552
+//    "+15556171812", // 555‑617‑1812
+//    "+15556485472", // 555‑648‑5472
+//    "+15555431928", // 555‑543‑1928
+//    "+13015552312", // (301)‑555‑2312
+//    "+15555187001"  // 555‑518‑7001
+//]
 
 // MARK: - Contact DTO for SwiftUI
 struct ContactRow: Identifiable {
@@ -58,19 +60,64 @@ final class FriendStore: ObservableObject {
     /// Signed‑in user’s own profile (updated by XPSystem after login)
     @Published var currentUser: UserModel = UserModel()
 
-    /// Add a contact as a friend if not already present
+    /// Add a contact as a friend if not already present  and stores it in a friends subcollection
     func add(contact: ContactRow) {
         guard !isFriend(contact.phone) else { return }
         var user = UserModel()
         user.totalXP = 0
         user.unlockIDs = [contact.id]
         friends.append(FitpalzFriend(id: contact.id, contact: contact, user: user))
+
+        Task {
+            guard let currentUserID = Auth.auth().currentUser?.uid else { return }
+
+            // Lookup their UID by phone
+            let db = Firestore.firestore()
+            let snap = try? await db.collection("users")
+                .whereField("phoneNumber", isEqualTo: contact.phone)
+                .limit(to: 1)
+                .getDocuments()
+
+            guard let friendDoc = snap?.documents.first else { return }
+            let friendUID = friendDoc.documentID
+
+            try? await db.collection("users").document(currentUserID)
+                .collection("friends").document(friendUID).setData([
+                    "timestamp": FieldValue.serverTimestamp(),
+                    "source": "contacts"
+                ])
+        }
     }
 
     /// Check if a phone number is already in the friends list
     func isFriend(_ phone: String) -> Bool {
         friends.contains(where: { $0.contact.phone == phone })
     }
+    
+    // Load friends from Firestore
+        func loadFriends() async {
+            guard let currentUserID = Auth.auth().currentUser?.uid else { return }
+
+            let db = Firestore.firestore()
+            do {
+                let snapshot = try await db.collection("users").document(currentUserID)
+                    .collection("friends").getDocuments()
+
+                for document in snapshot.documents {
+                    let friendUID = document.documentID
+                    let friendData = document.data()
+                    
+                    // Optionally, fetch full friend details (e.g., name, picture) from Firestore
+                    let contact = ContactRow(id: friendUID, name: friendData["name"] as? String ?? "Unknown", phone: "", picture: nil, onFitpalz: true, username: nil)
+                    let user = UserModel()  // Add any necessary user data here
+
+                    let friend = FitpalzFriend(id: friendUID, contact: contact, user: user)
+                    friends.append(friend)
+                }
+            } catch {
+                print("Error loading friends: \(error)")
+            }
+        }
 }
 
 // Helper lives at file scope
@@ -101,6 +148,28 @@ final class ContactManager: NSObject, ObservableObject {
     @Published var permissionDenied = false
     @Published var noContacts       = false
     
+    //This checks if the phone number is in Firestore and returns a UID and username if found.
+        private func isPhoneOnFitpalz(_ phone: String) async -> (Bool, String?, String?) {
+            let db = Firestore.firestore()
+            do {
+                let snap = try await db.collection("users")
+                    .whereField("phoneNumber", isEqualTo: phone)
+                    .limit(to: 1)
+                    .getDocuments()
+                
+                if let doc = snap.documents.first {
+                    let uid = doc.documentID
+                    let username = doc.data()["username"] as? String ?? "@user" + String(phone.suffix(4))
+                    return (true, uid, username)
+                } else {
+                    return (false, nil, nil)
+                }
+            } catch {
+                print("Error checking Firestore for phone \(phone): \(error)")
+                return (false, nil, nil)
+            }
+        }
+
     private let store = CNContactStore()
     
     func requestAndLoad() {
@@ -116,7 +185,7 @@ final class ContactManager: NSObject, ObservableObject {
             ]
             return
         }
-
+        
         let auth = CNContactStore.authorizationStatus(for: .contacts)
         switch auth {
         case .notDetermined:
@@ -137,7 +206,7 @@ final class ContactManager: NSObject, ObservableObject {
         // Heavy contact fetch off the main thread
         await withCheckedContinuation { (continuation: CheckedContinuation<Void, Never>) in
             let cnStore = self.store
-            DispatchQueue.global(qos: .userInitiated).async {
+            let workItem = DispatchWorkItem {
                 let keys = [CNContactGivenNameKey,
                             CNContactFamilyNameKey,
                             CNContactPhoneNumbersKey,
@@ -156,19 +225,24 @@ final class ContactManager: NSObject, ObservableObject {
                         idCounter[normalized] = collisions
                         let uniqueID = collisions == 1 ? normalized : "\(normalized)#\(collisions)"
                         
-                        let isOn = ContactsOnFitpalz.contains(normalized)
-                        let username = isOn ? "@user\(normalized.suffix(4))" : nil
-                        rows.append(ContactRow(id: uniqueID,
-                                               name: "\(contact.givenName) \(contact.familyName)",
-                                               phone: normalized,
-                                               picture: contact.thumbnailImageData.flatMap(UIImage.init(data:)),
-                                               onFitpalz: isOn,
-                                               username: username))
+                        // Async function call wrapped in Task to execute it asynchronously
+                        Task {
+                            let (isOn, uid, username) = await self.isPhoneOnFitpalz(normalized)
+                            DispatchQueue.main.async {
+                                rows.append(ContactRow(id: uniqueID,
+                                                       name: "\(contact.givenName) \(contact.familyName)",
+                                                       phone: normalized,
+                                                       picture: contact.thumbnailImageData.flatMap(UIImage.init(data:)),
+                                                       onFitpalz: isOn,
+                                                       username: username))
+                            }
+                        }
                     }
                 } catch {
                     print("Contact fetch error: \(error)")
                 }
                 
+                // Ensure UI updates on main thread
                 DispatchQueue.main.async {
                     if rows.isEmpty {
                         self.noContacts = true
@@ -179,6 +253,9 @@ final class ContactManager: NSObject, ObservableObject {
                     continuation.resume()
                 }
             }
+            
+            // Run the work item on a background thread
+            DispatchQueue.global(qos: .userInitiated).async(execute: workItem)
         }
     }
 }
@@ -201,7 +278,7 @@ struct MessageComposer: UIViewControllerRepresentable {
             didFinishWith result: MessageComposeResult) {
             controller.dismiss(animated: true)
         }
-    } 
+    }
 }
 
 // MARK: - Find Friends View
@@ -212,7 +289,7 @@ struct FindFriendsView: View {
     
     var body: some View {
         ZStack{
-            Color(hex: "191919") 
+            Color(hex: "191919")
                 .ignoresSafeArea()
             
             Group {
@@ -315,7 +392,7 @@ private struct ContactCell: View {
                     .foregroundColor(.white)
                     .font(.headline)
                 
-                Text(contact.phone) 
+                Text(contact.phone)
                     .font(.caption)
                     .foregroundColor(.gray)
                 
