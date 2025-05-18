@@ -9,6 +9,8 @@
 //------------------------------------------------------------------------
 import Foundation
 import SwiftUI
+import FirebaseFirestore
+import FirebaseAuth
 
 // MARK: - Core Immutable Data Types
 // Represents one long‑form accomplishment (e.g. “walk 103 435 steps”).
@@ -166,8 +168,12 @@ struct UnlockRecord: Identifiable, Codable, Sendable {
 struct UserModel {
     var unlockIDs: Set<String> = []
     var history: [UnlockRecord] = []
-    //var level: Int = 1
     var totalXP: Int = 0
+    var uid: String?
+    var firstName: String = ""
+    var email: String = ""
+    var accountStatus: String = ""
+    var friendUIDs: [String] = []
 }
 
 
@@ -175,6 +181,64 @@ struct UserModel {
 // Orchestrates unlock evaluation and XP recomputation for a user.
 final class XPSystem {
     let gallery = AchBadgeGallery()   // internal read‑only access
+
+    
+    // MARK: - Firebase
+    // Highlighted: Save totalXP and unlocks to Firebase Firestore
+    func saveUserDataToFirestore(userModel: UserModel, uid: String) {
+        let db = Firestore.firestore()
+
+        // Save totalXP directly to the user's main document
+        let userRef = db.collection("users").document(uid)
+        userRef.updateData([
+            "totalXP": userModel.totalXP
+        ]) { error in
+            if let error = error {
+                print("Error saving totalXP: \(error.localizedDescription)")
+            } else {
+                print("totalXP successfully saved.")
+            }
+        }
+
+        // Save the unlocks subcollection for this user
+        saveUnlocksToSubcollection(userModel: userModel, uid: uid)
+    }
+
+    // Function to save individual unlocks to a subcollection
+    func saveUnlocksToSubcollection(userModel: UserModel, uid: String) {
+        let db = Firestore.firestore()
+        let unlocksRef = db.collection("users").document(uid).collection("unlocks")
+
+        for record in userModel.history {
+            let unlockData: [String: Any] = [
+                "earnedAt": Timestamp(date: record.date),
+                "type": typeForUnlockID(record.id),
+                "xpAwarded": xpForUnlockID(record.id, currentXP: userModel.totalXP)
+            ]
+            unlocksRef.document(record.id).setData(unlockData, merge: true)
+        }
+    }
+
+    private func typeForUnlockID(_ id: String) -> String {
+        if UnlockRegistry.achievementRules[id] != nil {
+            return "achievement"
+        } else if UnlockRegistry.badgeRules[id] != nil {
+            return "badge"
+        }
+        return "unknown"
+    }
+
+    private func xpForUnlockID(_ id: String, currentXP: Int) -> Int {
+        let lvl = levelForXP(currentXP)
+        if let ach = gallery.achievements.first(where: { $0.id == id }) {
+            return ach.baseXP
+        } else if let badge = gallery.badges.first(where: { $0.id == id }) {
+            return badge.tier.xp(atLevel: lvl)
+        }
+        return 0
+    }
+    
+    // MARK: - End Firebase
 
     func process(snapshot: PlayerSnapshot,
                  user: inout UserModel) {
@@ -191,17 +255,13 @@ final class XPSystem {
 
         // 3. recalculate total XP once
         user.totalXP = computeXP(from: user.unlockIDs, givenXP: user.totalXP)
+
+        // Highlighted: Save totalXP and unlock data to Firestore after XP processing
+        if let uid = user.uid {
+            saveUserDataToFirestore(userModel: user, uid: uid)
+        }
     }
 
-    /*
-     Computes total XP from a set of unlock IDs.
-
-     - Parameters:
-       - ids:    All unlocked achievement/badge IDs.
-       - xp:     The player’s current XP total (used to derive level for badge scaling).
-
-     - Returns:  The summed XP value.
-     */
     private func computeXP(from ids: Set<String>, givenXP xp: Int) -> Int {
         let lvl = levelForXP(xp)
         return ids.reduce(0) { sum, id in
@@ -214,7 +274,6 @@ final class XPSystem {
         }
     }
 }
-
 
 // Returns the 1-based level for a given XP total using XPTable.thresholds
 func levelForXP(_ xp: Int) -> Int {
@@ -232,8 +291,6 @@ func percentToNextLevel(for xp: Int) -> Double {
     return Double(xp - current) / Double(next - current) * 100.0
 }
 
-
-
 // Move recalcLevel into UserModel using extension
 extension UserModel {
     /*
@@ -243,7 +300,6 @@ extension UserModel {
 //        level = levelForXP(totalXP)
 //    }
 }
-
 
 struct Xp_System: View {
     // 1.  Store the model in @State so SwiftUI can refresh the UI later
@@ -276,17 +332,58 @@ struct Xp_System: View {
         .padding()
         // 3.  Update the model once the view appears
         .onAppear {
-            var tmp = user
-            let snap = PlayerSnapshot(totalSteps: 105_000,
-                                      dailyLoginStreak: 10,
-                                      caloriesToday: 500)
-            xpEngine.process(snapshot: snap, user: &tmp)
-            user = tmp                       // trigger UI refresh
+//            var tmp = user
+//            tmp.uid = Auth.auth().currentUser?.uid  // required for saving to Firestore
+//
+//            let snap = PlayerSnapshot(totalSteps: 105_000, dailyLoginStreak: 10, caloriesToday: 500)
+//            xpEngine.process(snapshot: snap, user: &tmp)
+//            user = tmp
+            Task {
+                if var fetchedUser = await xpEngine.fetchUserModelFromFirebase() {
+                    let snap = PlayerSnapshot(totalSteps: 105_000, dailyLoginStreak: 10, caloriesToday: 500)
+                    xpEngine.process(snapshot: snap, user: &fetchedUser)
+                    user = fetchedUser
+                }
+            }
         }
     }
 }
 
+extension XPSystem {
+    func fetchUserModelFromFirebase() async -> UserModel? {
+        guard let uid = Auth.auth().currentUser?.uid else { return nil }
 
+        do {
+            let doc = try await Firestore.firestore().collection("users").document(uid).getDocument()
+            guard let data = doc.data() else { return nil }
+
+            var user = UserModel()
+            user.uid = uid
+            user.totalXP = data["totalXP"] as? Int ?? 0
+            user.firstName = data["firstName"] as? String ?? ""
+            user.email = data["email"] as? String ?? ""
+            user.accountStatus = data["accountStatus"] as? String ?? ""
+            user.friendUIDs = data["friendUIDs"] as? [String] ?? []
+
+            let unlocksSnap = try await Firestore.firestore()
+                .collection("users").document(uid).collection("unlocks").getDocuments()
+
+            let records: [UnlockRecord] = unlocksSnap.documents.compactMap { doc in
+                let date = (doc.data()["earnedAt"] as? Timestamp)?.dateValue() ?? Date()
+                return UnlockRecord(id: doc.documentID, date: date)
+            }
+
+            user.unlockIDs = Set(records.map(\.id))
+            user.history = records
+
+            return user
+
+        } catch {
+            print("Error fetching user model: \(error)")
+            return nil
+        }
+    }
+}
 
 #Preview {
 
