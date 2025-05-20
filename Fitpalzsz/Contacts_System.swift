@@ -90,7 +90,7 @@ final class FriendStore: ObservableObject {
             
             // Replace name with Firebase name for consistency
             let contactFromFirebase = ContactRow(
-                id: contact.id,
+                id: friendUID,
                 name: firebaseName,
                 phone: contact.phone,
                 picture: contact.picture,
@@ -124,44 +124,47 @@ final class FriendStore: ObservableObject {
     // Load friends from Firestore
     func loadFriends() async {
         guard let currentUserID = Auth.auth().currentUser?.uid else { return }
-        guard !hasLoadedFriends else { return }
-        hasLoadedFriends = true
-        
+
         let db = Firestore.firestore()
         do {
             let snapshot = try await db.collection("users").document(currentUserID)
                 .collection("friends").getDocuments()
             
+            // Clear existing list to avoid duplicates
+            var loadedFriends: [FitpalzFriend] = []
+
             for document in snapshot.documents {
                 let friendUID = document.documentID
                 let friendData = document.data()
-                
-                // Prevent duplicate friends
-                if friends.contains(where: { $0.id == friendUID }) {
-                    continue
-                }
                 
                 let name = friendData["name"] as? String ?? "Unknown"
                 let phone = friendData["phone"] as? String ?? ""
                 let username = friendData["username"] as? String ?? "@user"
                 let xp = friendData["xp"] as? Int ?? 0
-                
+
                 let contact = ContactRow(
-                    id: friendUID,
+                    id: friendUID, // this must match what's saved in `add`
                     name: name,
                     phone: phone,
                     picture: nil,
                     onFitpalz: true,
                     username: username
                 )
-                
+
                 var user = UserModel()
                 user.totalXP = xp
-                user.unlockIDs = [friendUID]
-                
+                user.unlockIDs = [friendUID] // or whatever IDs you've stored
+
                 let friend = FitpalzFriend(id: friendUID, contact: contact, user: user)
-                friends.append(friend)
+
+                // Prevent duplicates
+                if !loadedFriends.contains(where: { $0.id == friend.id }) {
+                    loadedFriends.append(friend)
+                }
             }
+
+            // Overwrite the published array
+            self.friends = loadedFriends
         } catch {
             print("Error loading friends: \(error)")
         }
