@@ -92,16 +92,18 @@ struct ContentView: View {
                 
 
                 
-                Button("Sign In with Google") {
+                Button(action: {
                     googleSignIn()
+                }) {
+                    Text("Sign in with Google")
+                        .font(.system(size: 17, weight: .bold))
+            
+                        .foregroundColor(.blue)
+                        .frame(maxWidth: .infinity)
                 }
-                .padding()
-                .frame(maxWidth: .infinity)
-                .background(Color(hex: "7b6af4"))
-                .foregroundColor(.white)
-                .cornerRadius(40)
-                .padding(.horizontal, 30)
-                .padding(.top, 10)
+                .padding(.horizontal, 20)
+                .padding(.top, 5)
+
                 
                 
                 NavigationLink("Don't have an account? Sign Up!") {
@@ -111,6 +113,7 @@ struct ContentView: View {
                 .font(.system(size: 17, weight: .bold))
                 .underline(true, color: .blue)
                 .frame(maxWidth: .infinity)
+                .underline(true, color: .blue)
                 .foregroundColor(.blue)
                 .cornerRadius(10)
                 
