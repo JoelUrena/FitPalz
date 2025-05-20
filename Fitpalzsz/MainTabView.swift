@@ -19,11 +19,10 @@ struct MainTabView: View {
 //                    Image(systemName: "person.2")
 //                    Text("Friends")
 //                }
-            FindFriendsView()
-                    .tabItem { Label("Find Friends", systemImage: "person.badge.plus") }
-
-                FriendsListView()
-                    .tabItem { Label("Friends", systemImage: "person.2") }
+            FriendsView()  // ← this is the one we just finished building
+                    .tabItem {
+                        Label("Friends", systemImage: "person.2")
+                    }
         }
     }
-}
+} 

@@ -7,6 +7,8 @@ import FirebaseAuth
 import GoogleSignIn
 import FirebaseFirestore
 
+
+
 // MARK: - LOGIN PAGE
 struct ContentView: View {
     @State private var email = ""
@@ -75,7 +77,7 @@ struct ContentView: View {
                         .multilineTextAlignment(.center)
                         .padding(.bottom, 10)
                         .offset(y: -25)
-                }
+                } 
                 
                 
                 Button("Sign In") {
@@ -136,7 +138,7 @@ struct ContentView: View {
                     .foregroundColor(.white)
                     .cornerRadius(10)
                     .offset(y: -30)
-                }
+                } 
             }
             .background(Color(hex: "191919").ignoresSafeArea()) 
             .edgesIgnoringSafeArea(.all)
@@ -152,7 +154,7 @@ struct ContentView: View {
                             }
                         }
                     }
-                }
+                } 
             }
         }
     }
@@ -343,13 +345,13 @@ struct SignUpView: View {
                 }
                 
                 Button("Sign Up") {
-                    signUp()
+                    signUp() 
                 }
                 .padding()
                 .frame(maxWidth: .infinity)
                 .background(Color(hex: "7b6af4"))
                 .foregroundColor(.white)
-                .cornerRadius(8)
+                .cornerRadius(40)
                 
                 Spacer()
             }

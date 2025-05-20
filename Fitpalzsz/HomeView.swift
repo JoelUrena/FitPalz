@@ -70,8 +70,8 @@ struct HomeView: View {
                                 Image(systemName: stat.icon)
                                     .font(.title)
                                     .foregroundColor(.white)
-                                    .scaleEffect(isPulsing ? 1.1 : 1.0) // Pulse effect
-                                    .animation(.easeInOut(duration: 1).repeatForever(autoreverses: true), value: isPulsing)
+                                 //   .scaleEffect(isPulsing ? 1.1 : 1.0) // Pulse effect
+                                   // .animation(.easeInOut(duration: 1).repeatForever(autoreverses: true), value: isPulsing)
                                     .frame(width: 50, height: 50)
                                     .background(Color(hex: "7b6af4"))
                                     .clipShape(Circle())
