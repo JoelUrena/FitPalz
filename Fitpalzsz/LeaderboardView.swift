@@ -1,4 +1,5 @@
 import SwiftUI
+import FirebaseFirestore
 
 
 // Leaderboard Model
@@ -18,39 +19,107 @@ struct LeaderboardEntry: Identifiable, Comparable {
     }
 }
 
-/// Fake data provider – replace later with Firebase fetch
 final class LeaderboardStore: ObservableObject {
     @Published var top10AllTime: [LeaderboardEntry] = []
     @Published var top10Weekly: [LeaderboardEntry] = []
+    @Published var allWeeklyEntries: [LeaderboardEntry] = []
+    @Published var allAllTimeEntries: [LeaderboardEntry] = []
     
-    // ───────── LeaderboardStore.init ─────────
-    init() {
-        // hard‑coded mock top‑10 for now
-        let mockTop = (0..<10).map { i in
-            LeaderboardEntry(name: "Top \(i + 1)",
-                             xp: 100_000 - i * 5_000,
-                             badges: 0,
-                             achievements: 0,
-                             profileImage: "person.circle")
+    private var hasLoadedAllTime = false
+    private var hasLoadedWeekly = false
+
+    func loadLeaderboard(isWeekly: Bool) async {
+        if isWeekly && !hasLoadedWeekly {
+            let entries = await Self.fetchTopUsers(weekly: true)
+            top10Weekly = Array(entries.prefix(10))
+            allWeeklyEntries = entries
+            hasLoadedWeekly = true
+        } else if !isWeekly && !hasLoadedAllTime {
+            let entries = await Self.fetchTopUsers(weekly: false)
+            top10AllTime = Array(entries.prefix(10))
+            allAllTimeEntries = entries
+            hasLoadedAllTime = true
         }
-        top10AllTime = mockTop
-        top10Weekly = mockTop.shuffled()
     }
-    /// Converts FriendStore friends to LeaderboardEntry array
-    @MainActor
-    static func entries(from friendStore: FriendStore) -> [LeaderboardEntry] {
-        friendStore.friends.map { f in
-            LeaderboardEntry(
-                name: f.contact.name,
-                xp: f.user.totalXP,
-                badges: f.user.unlockIDs.filter { id in
-                    XPSystem().gallery.badges.contains(where: { $0.id == id })
-                }.count,
-                achievements: f.user.unlockIDs.filter { id in
-                    XPSystem().gallery.achievements.contains(where: { $0.id == id })
-                }.count,
-                profileImage: "person.circle"
-            )
+
+    static func fetchTopUsers(limit: Int = 10, weekly: Bool = false) async -> [LeaderboardEntry] {
+        let db = Firestore.firestore()
+        var entries: [LeaderboardEntry] = []
+
+        do {
+            if weekly {
+                let weekKey = getWeekKey(for: Date())
+                let snapshot = try await db.collectionGroup("weeklyXP")
+                    .whereField("weekId", isEqualTo: weekKey)
+                    .order(by: "xp", descending: true)
+                    .limit(to: limit)
+                    .getDocuments()
+
+                for doc in snapshot.documents {
+                    let userId = doc.reference.parent.parent!.documentID
+                    let userDoc = try await db.collection("users").document(userId).getDocument()
+                    let userData = userDoc.data() ?? [:]
+                    let name = userData["firstName"] as? String ?? "Unknown"
+                    let xp = doc.data()["xp"] as? Int ?? 0
+
+                    let unlockSnap = try await db.collection("users").document(userId).collection("unlocks").getDocuments()
+                    let unlockIDs = unlockSnap.documents.map { $0.documentID }
+
+                    let badgeCount = unlockIDs.filter { id in
+                        XPSystem().gallery.badges.contains(where: { $0.id == id })
+                    }.count
+
+                    let achievementCount = unlockIDs.filter { id in
+                        XPSystem().gallery.achievements.contains(where: { $0.id == id })
+                    }.count
+
+                    entries.append(LeaderboardEntry(
+                        name: name,
+                        xp: xp,
+                        badges: badgeCount,
+                        achievements: achievementCount,
+                        profileImage: "person.circle"
+                    ))
+                }
+
+            } else {
+                let snapshot = try await db.collection("users")
+                    .order(by: "totalXP", descending: true)
+                    .limit(to: limit)
+                    .getDocuments()
+
+                for doc in snapshot.documents {
+                    let data = doc.data()
+                    let name = data["firstName"] as? String ?? "Unknown"
+                    let xp = data["totalXP"] as? Int ?? 0
+                    let uid = doc.documentID
+
+                    let unlockSnap = try await db.collection("users").document(uid).collection("unlocks").getDocuments()
+                    let unlockIDs = unlockSnap.documents.map { $0.documentID }
+
+                    let badgeCount = unlockIDs.filter { id in
+                        XPSystem().gallery.badges.contains(where: { $0.id == id })
+                    }.count
+
+                    let achievementCount = unlockIDs.filter { id in
+                        XPSystem().gallery.achievements.contains(where: { $0.id == id })
+                    }.count
+
+                    entries.append(LeaderboardEntry(
+                        name: name,
+                        xp: xp,
+                        badges: badgeCount,
+                        achievements: achievementCount,
+                        profileImage: "person.circle"
+                    ))
+                }
+            }
+
+            return entries.sorted()
+
+        } catch {
+            print("Error loading leaderboard: \(error)")
+            return []
         }
     }
 }
@@ -110,65 +179,77 @@ private struct LBRow: View {
     }
 
 
-// Leaderboard View
+//Leaderboard View
 struct LeaderboardView: View {
     @EnvironmentObject var friendStore: FriendStore
     @StateObject private var store = LeaderboardStore()
     @State private var showWeekly = false
     
+    // Change currentFriends to be a state variable
+    @State private var currentFriends: [LeaderboardEntry] = []
+
     var body: some View {
         NavigationView {
             ZStack {
                 Color(hex: "191919").edgesIgnoringSafeArea(.all)
                 
                 VStack {
-                                    Picker("Mode", selection: $showWeekly) {
-                                        Text("Weekly").tag(true)
-                                        Text("All‑Time").tag(false)
-                                    }
-                                    .pickerStyle(.segmented)
-                                    .padding(.horizontal)
+                    Picker("Mode", selection: $showWeekly) {
+                        Text("Weekly").tag(true)
+                        Text("All‑Time").tag(false)
+                    }
+                    .pickerStyle(.segmented)
+                    .padding(.horizontal)
 
-                                    List {
-                                        Section("Top 10") {
-                                            ForEach(currentTop10.indices, id: \.self) { i in
-                                                LBRow(rank: i + 1, entry: currentTop10[i])
-                                                    .listRowBackground(Color.clear)
-                                            }
-                                        }
+                    List {
+                        Section("Top 10") {
+                            ForEach(currentTop10.indices, id: \.self) { i in
+                                LBRow(rank: i + 1, entry: currentTop10[i])
+                                    .listRowBackground(Color.clear)
+                            }
+                        }
 
-                                        Section("Your Rank") {
-                                            LBRow(rank: userRank, entry: currentUserEntry)
-                                                .foregroundStyle(.yellow)
-                                                .listRowBackground(Color.clear)
-                                        }
+                        Section("Your Rank") {
+                            LBRow(rank: userRank, entry: currentUserEntry)
+                                .foregroundStyle(.yellow)
+                                .listRowBackground(Color.clear)
+                        }
 
-                                        if !currentFriends.isEmpty {
-                                            Section("Your Friends") {
-                                                ForEach(currentFriends.indices, id: \.self) { i in
-                                                    LBRow(rank: friendRanks[i], entry: currentFriends[i])
-                                                        .listRowBackground(Color.clear)
-                                                }
-                                            }
-                                        }
-                                    }
-                                    .listStyle(PlainListStyle())
-                                    .scrollContentBackground(.hidden)
+                        if !currentFriends.isEmpty {
+                            Section("Your Friends") {
+                                ForEach(currentFriends.indices, id: \.self) { i in
+                                    LBRow(rank: friendRanks[i], entry: currentFriends[i])
+                                        .listRowBackground(Color.clear)
                                 }
                             }
-                            .navigationTitle("Leaderboard")
-                            .navigationBarTitleDisplayMode(.inline)
-                            .toolbarBackground(Color.black, for: .navigationBar)
-                            .toolbarBackground(.visible, for: .navigationBar)
-                            .toolbarColorScheme(.dark, for: .navigationBar)
                         }
                     }
+                    .listStyle(PlainListStyle())
+                    .scrollContentBackground(.hidden)
+                }
+            }
+            .navigationTitle("Leaderboard")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbarBackground(Color.black, for: .navigationBar)
+            .toolbarBackground(.visible, for: .navigationBar)
+            .toolbarColorScheme(.dark, for: .navigationBar)
+            .onAppear {
+                Task {
+                    await store.loadLeaderboard(isWeekly: showWeekly)
+                    await fetchFriends()
+                }
+            }
+            .task(id: showWeekly) {
+                await store.loadLeaderboard(isWeekly: showWeekly)
+            }
+        }
+    }
 
-    
     // Helpers to pick weekly/all‑time arrays
     private var currentTop10: [LeaderboardEntry] {
         showWeekly ? store.top10Weekly : store.top10AllTime
     }
+
     private var currentUserEntry: LeaderboardEntry {
         let current = friendStore.currentUser
         return LeaderboardEntry(
@@ -180,22 +261,59 @@ struct LeaderboardView: View {
             achievements: current.unlockIDs.filter { id in
                 XPSystem().gallery.achievements.contains(where: { $0.id == id })
             }.count,
-            profileImage: "person.circle"
+            profileImage: "person.circle"  // This should be dynamic if available
         )
     }
-    private var currentFriends: [LeaderboardEntry] {
-        LeaderboardStore.entries(from: friendStore)
-            .sorted()
-            .prefix(10)
-            .map { $0 }
-    }
+
     private var userRank: Int {
-        // For mock demo, assume rank is 42 / 38
-        showWeekly ? 39 : 43
+        guard let userId = friendStore.currentUser.uid, let userUUID = UUID(uuidString: userId) else {
+            // Handle the case where UID is not available or not valid
+            return -1
+        }
+
+        // Find the rank (position) of the current user in the leaderboard
+        let rank = currentTop10.firstIndex { entry in
+            entry.id == userUUID  // Now we're comparing two UUID values
+        } ?? -1  // Return -1 if the user is not found in the leaderboard
+        return rank + 1  // Return the rank as 1-based index
     }
+
     private var friendRanks: [Int] {
         currentFriends.enumerated().map { idx, _ in idx + 1 }
     }
+
+    // Fetch friends and their ranks
+    private func fetchFriends() async {
+        let friends = await entries(from: friendStore)
+        self.currentFriends = friends.sorted()
+    }
+}
+
+// Helper to get leaderboard entries from friends
+private func entries(from friendStore: FriendStore) async -> [LeaderboardEntry] {
+    await MainActor.run {
+        return friendStore.friends.map { friend in
+            LeaderboardEntry(
+                name: friend.contact.name,
+                xp: friend.user.totalXP,
+                badges: friend.user.unlockIDs.filter { id in
+                    XPSystem().gallery.badges.contains(where: { $0.id == id })
+                }.count,
+                achievements: friend.user.unlockIDs.filter { id in
+                    XPSystem().gallery.achievements.contains(where: { $0.id == id })
+                }.count,
+                profileImage: "person.circle"  // This should be dynamic if available
+            )
+        }
+    }
+}
+
+/// Returns a string like "2025-W21" for the given date
+func getWeekKey(for date: Date) -> String {
+    let calendar = Calendar(identifier: .iso8601)
+    let week = calendar.component(.weekOfYear, from: date)
+    let year = calendar.component(.yearForWeekOfYear, from: date)
+    return "\(year)-W\(week)"
 }
 
 // MARK: - Preview
@@ -209,4 +327,6 @@ struct LeaderboardView_Previews: PreviewProvider {
     }
 }
 #endif
+ 
+
  
