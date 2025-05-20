@@ -147,31 +147,9 @@ final class ContactManager: NSObject, ObservableObject {
     @Published var invitePalz: [ContactRow] = []
     @Published var permissionDenied = false
     @Published var noContacts       = false
-    
-    //This checks if the phone number is in Firestore and returns a UID and username if found.
-        private func isPhoneOnFitpalz(_ phone: String) async -> (Bool, String?, String?) {
-            let db = Firestore.firestore()
-            do {
-                let snap = try await db.collection("users")
-                    .whereField("phoneNumber", isEqualTo: phone)
-                    .limit(to: 1)
-                    .getDocuments()
-                
-                if let doc = snap.documents.first {
-                    let uid = doc.documentID
-                    let username = doc.data()["username"] as? String ?? "@user" + String(phone.suffix(4))
-                    return (true, uid, username)
-                } else {
-                    return (false, nil, nil)
-                }
-            } catch {
-                print("Error checking Firestore for phone \(phone): \(error)")
-                return (false, nil, nil)
-            }
-        }
 
     private let store = CNContactStore()
-    
+
     func requestAndLoad() {
         // Skip real Contacts fetch when running inside Xcode canvas previews
         if ProcessInfo.processInfo.environment["XCODE_RUNNING_FOR_PREVIEWS"] == "1" {
@@ -185,7 +163,7 @@ final class ContactManager: NSObject, ObservableObject {
             ]
             return
         }
-        
+
         let auth = CNContactStore.authorizationStatus(for: .contacts)
         switch auth {
         case .notDetermined:
@@ -201,64 +179,79 @@ final class ContactManager: NSObject, ObservableObject {
             permissionDenied = true
         }
     }
-    
+
     private func loadContacts() async {
-        // Heavy contact fetch off the main thread
-        await withCheckedContinuation { (continuation: CheckedContinuation<Void, Never>) in
-            let cnStore = self.store
-            let workItem = DispatchWorkItem {
-                let keys = [CNContactGivenNameKey,
-                            CNContactFamilyNameKey,
-                            CNContactPhoneNumbersKey,
-                            CNContactThumbnailImageDataKey] as [CNKeyDescriptor]
-                let request = CNContactFetchRequest(keysToFetch: keys)
-                
-                var rows: [ContactRow] = []
-                var idCounter: [String:Int] = [:]   // phone → collision counter
-                
-                do {
-                    try cnStore.enumerateContacts(with: request) { contact, _ in
-                        guard let phoneValue = contact.phoneNumbers.first?.value.stringValue else { return }
-                        let normalized = normalizePhone(phoneValue)
-                        // ensure unique ID even if multiple contacts share the same phone
-                        let collisions = (idCounter[normalized] ?? 0) + 1
-                        idCounter[normalized] = collisions
-                        let uniqueID = collisions == 1 ? normalized : "\(normalized)#\(collisions)"
-                        
-                        // Async function call wrapped in Task to execute it asynchronously
-                        Task {
-                            let (isOn, uid, username) = await self.isPhoneOnFitpalz(normalized)
-                            DispatchQueue.main.async {
-                                rows.append(ContactRow(id: uniqueID,
-                                                       name: "\(contact.givenName) \(contact.familyName)",
-                                                       phone: normalized,
-                                                       picture: contact.thumbnailImageData.flatMap(UIImage.init(data:)),
-                                                       onFitpalz: isOn,
-                                                       username: username))
-                            }
-                        }
-                    }
-                } catch {
-                    print("Contact fetch error: \(error)")
-                }
-                
-                // Ensure UI updates on main thread
-                DispatchQueue.main.async {
-                    if rows.isEmpty {
-                        self.noContacts = true
-                    } else {
-                        self.onFitpalz  = rows.filter(\.onFitpalz).sorted { $0.name < $1.name }
-                        self.invitePalz = rows.filter { !$0.onFitpalz }.sorted { $0.name < $1.name }
-                    }
-                    continuation.resume()
-                }
+        let keys = [CNContactGivenNameKey,
+                    CNContactFamilyNameKey,
+                    CNContactPhoneNumbersKey,
+                    CNContactThumbnailImageDataKey] as [CNKeyDescriptor]
+        let request = CNContactFetchRequest(keysToFetch: keys)
+        var contacts: [CNContact] = []
+
+        do {
+            try store.enumerateContacts(with: request) { contact, _ in
+                contacts.append(contact)
             }
-            
-            // Run the work item on a background thread
-            DispatchQueue.global(qos: .userInitiated).async(execute: workItem)
+        } catch {
+            print("Contact fetch error: \(error)")
+            return
+        }
+
+        if contacts.isEmpty {
+            self.noContacts = true
+            return
+        }
+
+        var rows: [ContactRow] = []
+        var idCounter: [String:Int] = [:]
+
+        for contact in contacts {
+            guard let phoneValue = contact.phoneNumbers.first?.value.stringValue else { continue }
+            let normalized = normalizePhone(phoneValue)
+            let collisions = (idCounter[normalized] ?? 0) + 1
+            idCounter[normalized] = collisions
+            let uniqueID = collisions == 1 ? normalized : "\(normalized)#\(collisions)"
+
+            let (isOn, _, username) = await isPhoneOnFitpalz(normalized)
+
+            let row = ContactRow(id: uniqueID,
+                                 name: "\(contact.givenName) \(contact.familyName)",
+                                 phone: normalized,
+                                 picture: contact.thumbnailImageData.flatMap(UIImage.init(data:)),
+                                 onFitpalz: isOn,
+                                 username: username)
+            rows.append(row)
+        }
+
+        self.onFitpalz  = rows.filter(\.onFitpalz).sorted { $0.name < $1.name }
+        self.invitePalz = rows.filter { !$0.onFitpalz }.sorted { $0.name < $1.name }
+    }
+
+    // This checks if the phone number is in Firestore and returns a UID and username if found.
+    private func isPhoneOnFitpalz(_ phone: String) async -> (Bool, String?, String?) {
+        let db = Firestore.firestore()
+        do {
+            let snap = try await db.collection("users")
+                .whereField("phoneNumber", isEqualTo: phone)
+                .limit(to: 1)
+                .getDocuments()
+
+            if let doc = snap.documents.first {
+                let uid = doc.documentID
+                let username = doc.data()["username"] as? String ?? "@user" + String(phone.suffix(4))
+                return (true, uid, username)
+            } else {
+                return (false, nil, nil)
+            }
+        } catch {
+            print("Error checking Firestore for phone \(phone): \(error)")
+            return (false, nil, nil)
         }
     }
 }
+
+
+
 
 // MARK: - MessageCompose helper
 struct MessageComposer: UIViewControllerRepresentable {
