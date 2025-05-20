@@ -188,6 +188,21 @@ struct LeaderboardView: View {
     // Change currentFriends to be a state variable
     @State private var currentFriends: [LeaderboardEntry] = []
 
+    // MARK: - Weekly helpers (inside LeaderboardView)
+    private var startOfWeek: Date {
+        Calendar.current.date(
+            from: Calendar.current.dateComponents([.yearForWeekOfYear, .weekOfYear],
+                                                  from: Date()))!
+    }
+
+    private func xpFor(_ user: UserModel) -> Int {
+        if showWeekly {
+            return XPSystem.shared.xpEarnedSince(startOfWeek, for: user)
+        } else {
+            return user.totalXP
+        }
+    }
+
     var body: some View {
         NavigationView {
             ZStack {
@@ -254,7 +269,7 @@ struct LeaderboardView: View {
         let current = friendStore.currentUser
         return LeaderboardEntry(
             name: "You",
-            xp: current.totalXP,
+            xp: xpFor(current),
             badges: current.unlockIDs.filter { id in
                 XPSystem().gallery.badges.contains(where: { $0.id == id })
             }.count,
@@ -284,27 +299,22 @@ struct LeaderboardView: View {
 
     // Fetch friends and their ranks
     private func fetchFriends() async {
-        let friends = await entries(from: friendStore)
-        self.currentFriends = friends.sorted()
-    }
-}
-
-// Helper to get leaderboard entries from friends
-private func entries(from friendStore: FriendStore) async -> [LeaderboardEntry] {
-    await MainActor.run {
-        return friendStore.friends.map { friend in
-            LeaderboardEntry(
-                name: friend.contact.name,
-                xp: friend.user.totalXP,
-                badges: friend.user.unlockIDs.filter { id in
-                    XPSystem().gallery.badges.contains(where: { $0.id == id })
-                }.count,
-                achievements: friend.user.unlockIDs.filter { id in
-                    XPSystem().gallery.achievements.contains(where: { $0.id == id })
-                }.count,
-                profileImage: "person.circle"  // This should be dynamic if available
-            )
+        let friends = await MainActor.run {
+            friendStore.friends.map { friend in
+                LeaderboardEntry(
+                    name: friend.contact.name,
+                    xp: xpFor(friend.user),
+                    badges: friend.user.unlockIDs.filter { id in
+                        XPSystem().gallery.badges.contains(where: { $0.id == id })
+                    }.count,
+                    achievements: friend.user.unlockIDs.filter { id in
+                        XPSystem().gallery.achievements.contains(where: { $0.id == id })
+                    }.count,
+                    profileImage: "person.circle"
+                )
+            }
         }
+        self.currentFriends = friends.sorted()
     }
 }
 
@@ -327,6 +337,4 @@ struct LeaderboardView_Previews: PreviewProvider {
     }
 }
 #endif
- 
-
  

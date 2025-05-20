@@ -291,6 +291,7 @@ func percentToNextLevel(for xp: Int) -> Double {
     return Double(xp - current) / Double(next - current) * 100.0
 }
 
+
 // Move recalcLevel into UserModel using extension
 extension UserModel {
     /*
@@ -300,6 +301,8 @@ extension UserModel {
 //        level = levelForXP(totalXP)
 //    }
 }
+
+
 
 struct Xp_System: View {
     // 1.  Store the model in @State so SwiftUI can refresh the UI later
@@ -383,6 +386,21 @@ extension XPSystem {
             return nil
         }
     }
+    /// Total XP earned by `user` since the given date.
+    func xpEarnedSince(_ date: Date, for user: UserModel) -> Int {
+        return user.history
+            .filter { $0.date >= date }
+            .reduce(0) { sum, rec in
+                if let a = gallery.achievements.first(where: { $0.id == rec.id }) {
+                    return sum + a.baseXP
+                }
+                if let b = gallery.badges.first(where: { $0.id == rec.id }) {
+                    return sum + b.tier.rawValue
+                }
+                return sum
+            }
+    }
+}   // end extension XPSystem
 }
 
 #Preview {

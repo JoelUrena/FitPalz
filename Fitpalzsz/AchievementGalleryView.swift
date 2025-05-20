@@ -51,8 +51,7 @@ struct AchievementRow: View {
     
     var body: some View {
         HStack(spacing: 16) {
-            // Placeholder icon (replace with Image(achievement.assetName) when assets are in XCAssets)
-            Image(systemName: "rosette")
+            Image(achievement.assetName)
                 .resizable()
                 .frame(width: 40, height: 40)
                 .opacity(earnedDate == nil ? 0.5 : 1.0)
@@ -82,7 +81,7 @@ struct BadgeRow: View {
     
     var body: some View {
         HStack(spacing: 16) {
-            Image(systemName: "seal.fill")      // placeholder
+            Image(badge.assetName)
                 .resizable()
                 .frame(width: 40, height: 40)
                 .opacity(earnedDate == nil ? 0.5 : 1.0)
@@ -137,8 +136,18 @@ struct AchievementGalleryView: View {
                     
             }
             .background(Color(hex: "191919"))
-            .toolbar { HistoryButton() }
             .navigationTitle("Achievements")
-        }
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    NavigationLink(
+                        destination: AchievementHistoryView()
+                            .environmentObject(friendStore)
+                    ) {
+                        Image(systemName: "clock.arrow.circlepath")
+                            .foregroundColor(.white)
+                    }
+                }
+            }
+        } // end NavigationView
     }
 }

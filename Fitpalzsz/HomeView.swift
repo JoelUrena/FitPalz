@@ -32,7 +32,7 @@ struct HomeView: View {
     @Binding var userIsLoggedIn: Bool
     @State private var stepCount = 0
     @EnvironmentObject private var healthkitEngine: HealthkitEngine
-    
+    @EnvironmentObject var friendStore: FriendStore   // provides currentUser profile card
     
     
     let statsData: [StatItem] = [
@@ -62,7 +62,8 @@ struct HomeView: View {
                         .foregroundColor(.white)
                         .bold()
                     
-                    
+                    // Profile snapshot (PSN‑style card)
+                    ProfileCard(user: friendStore.currentUser)
                     
                     ForEach(statsData, id: \.label) { stat in
                         VStack(alignment: .leading, spacing: 10) {
