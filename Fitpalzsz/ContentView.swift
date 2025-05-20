@@ -383,13 +383,8 @@ struct SignUpView: View {
         }
     }
     
-    func normalizePhoneNumber(_ phone: String) -> String {
-        return phone.filter { $0.isNumber }
-    }
-    
-    // MARK: - STORING TO FIREBASE
-    func saveUserToFirestore() {
-        guard let user = Auth.auth().currentUser else { return }
+       // MARK: - STORING TO FIREBASE
+    func saveUserToFirestore(user: User) {
         let db = Firestore.firestore()
         let userData: [String: Any] = [
             "firstName": firstName,
@@ -397,14 +392,32 @@ struct SignUpView: View {
             "email": user.email ?? "",
             "uid": user.uid,
             "signUpDate": FieldValue.serverTimestamp(),
-            "accountStatus": Auth.auth().currentUser?.isEmailVerified == true ? "verified" : "pending_verification"
+            "accountStatus": user.isEmailVerified ? "verified" : "pending_verification",
+            "totalXP": 0,  // Initial XP value for the user
+            "weeklyXP": 0  // Initial weekly XP value
         ]
         db.collection("users").document(user.uid).setData(userData) { error in
             if let error = error {
                 print("Firestore error: \(error.localizedDescription)")
+            } else {
+                print("User data saved to Firestore.")
             }
         }
     }
+
+    func normalizePhoneNumber(_ raw: String) -> String {
+        let digits = raw.filter { "0123456789".contains($0) }
+        if raw.trimmingCharacters(in: .whitespaces).first == "+" {
+            return "+" + digits
+        } else if digits.count == 10 {
+            return "+1" + digits
+        } else if digits.count == 11 && digits.first == "1" {
+            return "+" + digits
+        } else {
+            return "+" + digits
+        }
+    }
+    
     // MARK: - PASSWORD CHECKS
     func isValidPassword(_ password: String) -> String? {
         if password.count < 8 {
