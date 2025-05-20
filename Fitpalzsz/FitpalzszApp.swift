@@ -28,8 +28,8 @@ struct FitpalzszApp: App {
             FirebaseApp.configure()
             return true
         }
-    }
-    
+    } 
+     
     //google sign in
     func application(_ app: UIApplication,
                      open url: URL,
@@ -41,31 +41,50 @@ struct FitpalzszApp: App {
     //healthkit initialization
     
     init() {
-        
-        //make sure that there is actual data in this thing
+        // Ensure health data is available
         guard HKHealthStore.isHealthDataAvailable() else {
-            
             fatalError("no health data available")
-            
         }
         
         healthStore = HKHealthStore()
         requestHealthKitAccess()
-        
-        
+
+        // Tab Bar appearance customization
         let appearance = UITabBarAppearance()
         appearance.configureWithOpaqueBackground()
         appearance.backgroundColor = UIColor.black
         UITabBar.appearance().standardAppearance = appearance
         
-        if #available(iOS 15.0, *) { // ios 14 or earlir will crash
+        if #available(iOS 15.0, *) {
             UITabBar.appearance().scrollEdgeAppearance = appearance
         }
-        
+
         UITabBar.appearance().tintColor = UIColor.white
         UITabBar.appearance().unselectedItemTintColor = UIColor.gray
+
+        // Segmented Control text color fix
+        let purple = UIColor(red: 123/255, green: 106/255, blue: 244/255, alpha: 1.0) // match your icon purple
+        let font = UIFont.systemFont(ofSize: 14, weight: .semibold)
+
+        // Unselected state
+        UISegmentedControl.appearance().setTitleTextAttributes([
+            .foregroundColor: UIColor.lightGray,
+            .font: font
+        ], for: .normal)
+
+        // Selected state
+        UISegmentedControl.appearance().setTitleTextAttributes([
+            .foregroundColor: purple,
+            .font: font
+        ], for: .selected)
+
+        // fix background flicker by setting selected segment tint
+        UISegmentedControl.appearance().selectedSegmentTintColor = UIColor(white: 0.15, alpha: 1.0) // dark gray
+
+
+        
     }
-    
+
     //healthkit permissions
     private func requestHealthKitAccess() {
         

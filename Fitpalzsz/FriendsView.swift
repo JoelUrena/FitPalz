@@ -35,7 +35,7 @@ func fetchContacts(completion: @escaping ([Friend]) -> Void) {
             )
             fetchedFriends.append(friend)
         }
-        completion(fetchedFriends)
+        completion(fetchedFriends) 
     } catch {
         print("Failed to fetch contacts, error: \(error)")
         completion([])
@@ -85,7 +85,16 @@ struct Friend: Identifiable {
 
 
 //Friends View
-struct FriendsView: View { 
+struct FriendsView: View {
+    init() {
+        UISegmentedControl.appearance().setTitleTextAttributes(
+            [.foregroundColor: UIColor.lightGray], for: .normal
+        )
+        UISegmentedControl.appearance().setTitleTextAttributes(
+            [.foregroundColor: UIColor.white], for: .selected
+        )
+    }
+
     @State private var searchText: String = ""
     @State private var isAddFriendPresented = false
     @State private var expandedFriendID: UUID? = nil
@@ -117,68 +126,73 @@ struct FriendsView: View {
             Color(hex: "191919").edgesIgnoringSafeArea(.all)
                 
             NavigationView {
-                VStack(spacing: 12) { 
-                    Picker("Mode", selection: $selectedTab) {
-                        Text("Find Friends").tag(FriendTab.findFriends)
-                        Text("My Friends").tag(FriendTab.myFriends)
-                    }
-                    .pickerStyle(.segmented)
-                    .padding(.horizontal)
-
-                    Group {
-                        if selectedTab == .findFriends {
-                            contactListView
-                        } else {
-                            myFriendsView
+                VStack(spacing: 0) {
+                    VStack(spacing: 12) {
+                        Picker("Mode", selection: $selectedTab) {
+                            Text("Find Friends").tag(FriendTab.findFriends)
+                            Text("My Friends").tag(FriendTab.myFriends)
                         }
-                    }
-
+                        .pickerStyle(.segmented)
+                        .padding(.horizontal)
+                        .background(Color.black)
+                        .tint(.white) 
+                        
+                        Group {
+                            if selectedTab == .findFriends {
+                                contactListView
+                            } else {
+                                myFriendsView
+                            }
+                        }
+                        
                     }
                     .listStyle(PlainListStyle())
                     .scrollContentBackground(.hidden)
-                    .searchable(text: $searchText)
+                    
                 }
-                
-            }
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .navigationTitle("Friends")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbarBackground(Color.black, for: .navigationBar)
-            .toolbarBackground(.visible, for: .navigationBar)
-            .toolbarColorScheme(.dark, for: .navigationBar)
-            .onAppear {
-                
-                fetchContactList { fetchedContacts in
-                    contactList = fetchedContacts
-                }
-            }
-
-
-            
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button(action: {
-                        isAddFriendPresented.toggle()
-                    }) {
-                        Image(systemName: "plus")
-                            .foregroundColor(.purple)
-                    }
-                }
-            }
-            .sheet(isPresented: $isAddFriendPresented) {
-                VStack {
-                    Text("Add Friend Feature Coming Soon")
-                        .font(.title2)
-                        .padding()
-                    Button("Close") {
-                        isAddFriendPresented = false
-                    }
-                    .padding()
-                }
+                .searchable(text: $searchText)
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .background(Color(hex: "191919"))
-                .foregroundColor(.white)
+                .navigationTitle("Friends")
+                .navigationBarTitleDisplayMode(.inline)
+                .toolbarBackground(Color.black, for: .navigationBar)
+                .toolbarBackground(.visible, for: .navigationBar)
+                .toolbarColorScheme(.dark, for: .navigationBar)
+                .onAppear {
+                    
+                    fetchContactList { fetchedContacts in
+                        contactList = fetchedContacts
+                    }
+                }
+                .toolbar {
+                    ToolbarItem(placement: .navigationBarTrailing) {
+                        Button(action: {
+                            isAddFriendPresented.toggle()
+                        }) {
+                            Image(systemName: "plus")
+                                .foregroundColor(.purple)
+                        }
+                    }
+                }
+                .sheet(isPresented: $isAddFriendPresented) {
+                    VStack {
+                        Text("Add Friend Feature Coming Soon")
+                            .font(.title2)
+                            .padding()
+                        Button("Close") {
+                            isAddFriendPresented = false
+                        }
+                        .padding()
+                    }
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .background(Color(hex: "191919"))
+                    .foregroundColor(.white)
+                }
+                
             }
+                
+            }
+            
             
         } 
         var contactListView: some View {

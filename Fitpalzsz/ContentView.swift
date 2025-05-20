@@ -358,7 +358,7 @@ struct SignUpView: View {
             .padding()
             .background(Color.black.edgesIgnoringSafeArea(.all))
         }
-    }
+    } 
     // MARK: - SIGN UP
     func signUp() {
         guard password == confirmPassword else {
@@ -381,7 +381,10 @@ struct SignUpView: View {
                     print("Verification email sent!")
                 }
             }
-            saveUserToFirestore()
+            if let user = result?.user {
+                saveUserToFirestore(user: user)
+            }
+
         }
     }
     

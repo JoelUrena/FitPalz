@@ -189,11 +189,11 @@ struct LeaderboardView: View {
     @State private var currentFriends: [LeaderboardEntry] = []
 
     var body: some View {
-        NavigationView {
-            ZStack {
-                Color(hex: "191919").edgesIgnoringSafeArea(.all)
-                
-                VStack {
+        ZStack {
+            Color(hex: "191919").edgesIgnoringSafeArea(.all)
+
+            NavigationView {
+                VStack(spacing: 12) {
                     Picker("Mode", selection: $showWeekly) {
                         Text("Weekly").tag(true)
                         Text("All‑Time").tag(false)
@@ -227,23 +227,25 @@ struct LeaderboardView: View {
                     .listStyle(PlainListStyle())
                     .scrollContentBackground(.hidden)
                 }
-            }
-            .navigationTitle("Leaderboard")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbarBackground(Color.black, for: .navigationBar)
-            .toolbarBackground(.visible, for: .navigationBar)
-            .toolbarColorScheme(.dark, for: .navigationBar)
-            .onAppear {
-                Task {
-                    await store.loadLeaderboard(isWeekly: showWeekly)
-                    await fetchFriends()
-                }
-            }
-            .task(id: showWeekly) {
-                await store.loadLeaderboard(isWeekly: showWeekly)
+                .background(Color(hex: "191919"))
+                .navigationTitle("Leaderboard")
+                .navigationBarTitleDisplayMode(.inline)
+                .toolbarBackground(Color.black, for: .navigationBar)
+                .toolbarBackground(.visible, for: .navigationBar)
+                .toolbarColorScheme(.dark, for: .navigationBar)
             }
         }
+        .onAppear {
+            Task {
+                await store.loadLeaderboard(isWeekly: showWeekly)
+                await fetchFriends()
+            }
+        }
+        .task(id: showWeekly) {
+            await store.loadLeaderboard(isWeekly: showWeekly)
+        }
     }
+
 
     // Helpers to pick weekly/all‑time arrays
     private var currentTop10: [LeaderboardEntry] {
