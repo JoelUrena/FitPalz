@@ -53,71 +53,119 @@ struct FitpalzFriend: Identifiable {
     var user: UserModel
 }
 
-@MainActor
 final class FriendStore: ObservableObject {
     @Published private(set) var friends: [FitpalzFriend] = []
-    
     /// Signed‑in user’s own profile (updated by XPSystem after login)
     @Published var currentUser: UserModel = UserModel()
-
+    
+    private var hasLoadedFriends = false  // <-- Add this
+    
     /// Add a contact as a friend if not already present  and stores it in a friends subcollection
     func add(contact: ContactRow) {
         guard !isFriend(contact.phone) else { return }
-        var user = UserModel()
-        user.totalXP = 0
-        user.unlockIDs = [contact.id]
-        friends.append(FitpalzFriend(id: contact.id, contact: contact, user: user))
-
+        
         Task {
             guard let currentUserID = Auth.auth().currentUser?.uid else { return }
-
-            // Lookup their UID by phone
+            
             let db = Firestore.firestore()
             let snap = try? await db.collection("users")
                 .whereField("phoneNumber", isEqualTo: contact.phone)
                 .limit(to: 1)
                 .getDocuments()
-
-            guard let friendDoc = snap?.documents.first else { return }
+            
+            guard let friendDoc = snap?.documents.first else {
+                // Fallback: add with local contact name + 0 XP
+                var fallbackUser = UserModel()
+                fallbackUser.totalXP = 0
+                fallbackUser.unlockIDs = [contact.id]
+                friends.append(FitpalzFriend(id: contact.id, contact: contact, user: fallbackUser))
+                return
+            }
+            
             let friendUID = friendDoc.documentID
-
+            let data = friendDoc.data()
+            let firebaseName = data["firstName"] as? String ?? contact.name
+            let xp = data["totalXP"] as? Int ?? 0
+            let username = data["username"] as? String ?? contact.username ?? "@user"
+            
+            // Replace name with Firebase name for consistency
+            let contactFromFirebase = ContactRow(
+                id: contact.id,
+                name: firebaseName,
+                phone: contact.phone,
+                picture: contact.picture,
+                onFitpalz: true,
+                username: username
+            )
+            
+            var user = UserModel()
+            user.totalXP = xp
+            user.unlockIDs = [contact.id]
+            
+            friends.append(FitpalzFriend(id: contact.id, contact: contactFromFirebase, user: user))
+            
             try? await db.collection("users").document(currentUserID)
                 .collection("friends").document(friendUID).setData([
                     "timestamp": FieldValue.serverTimestamp(),
-                    "source": "contacts"
+                    "source": "contacts",
+                    "phone": contact.phone,
+                    "name": firebaseName,
+                    "username": username,
+                    "xp": xp
                 ])
         }
     }
-
+    
     /// Check if a phone number is already in the friends list
     func isFriend(_ phone: String) -> Bool {
         friends.contains(where: { $0.contact.phone == phone })
     }
     
     // Load friends from Firestore
-        func loadFriends() async {
-            guard let currentUserID = Auth.auth().currentUser?.uid else { return }
-
-            let db = Firestore.firestore()
-            do {
-                let snapshot = try await db.collection("users").document(currentUserID)
-                    .collection("friends").getDocuments()
-
-                for document in snapshot.documents {
-                    let friendUID = document.documentID
-                    let friendData = document.data()
-                    
-                    // Optionally, fetch full friend details (e.g., name, picture) from Firestore
-                    let contact = ContactRow(id: friendUID, name: friendData["name"] as? String ?? "Unknown", phone: "", picture: nil, onFitpalz: true, username: nil)
-                    let user = UserModel()  // Add any necessary user data here
-
-                    let friend = FitpalzFriend(id: friendUID, contact: contact, user: user)
-                    friends.append(friend)
+    func loadFriends() async {
+        guard let currentUserID = Auth.auth().currentUser?.uid else { return }
+        guard !hasLoadedFriends else { return }
+        hasLoadedFriends = true
+        
+        let db = Firestore.firestore()
+        do {
+            let snapshot = try await db.collection("users").document(currentUserID)
+                .collection("friends").getDocuments()
+            
+            for document in snapshot.documents {
+                let friendUID = document.documentID
+                let friendData = document.data()
+                
+                // Prevent duplicate friends
+                if friends.contains(where: { $0.id == friendUID }) {
+                    continue
                 }
-            } catch {
-                print("Error loading friends: \(error)")
+                
+                let name = friendData["name"] as? String ?? "Unknown"
+                let phone = friendData["phone"] as? String ?? ""
+                let username = friendData["username"] as? String ?? "@user"
+                let xp = friendData["xp"] as? Int ?? 0
+                
+                let contact = ContactRow(
+                    id: friendUID,
+                    name: name,
+                    phone: phone,
+                    picture: nil,
+                    onFitpalz: true,
+                    username: username
+                )
+                
+                var user = UserModel()
+                user.totalXP = xp
+                user.unlockIDs = [friendUID]
+                
+                let friend = FitpalzFriend(id: friendUID, contact: contact, user: user)
+                friends.append(friend)
             }
+        } catch {
+            print("Error loading friends: \(error)")
         }
+    }
 }
 
 // Helper lives at file scope
@@ -410,51 +458,50 @@ private struct ContactCell: View {
     }
 }
 
-// MARK: - Friends List View
 struct FriendsListView: View {
     @EnvironmentObject var friendStore: FriendStore
     
     var body: some View {
-        if friendStore.friends.isEmpty {
-            // ---------- Empty‑state placeholder ----------
-            VStack(spacing: 12) {
-                Image(systemName: "person.2.slash")
-                    .font(.largeTitle)
-                    .foregroundStyle(.secondary)
-                Text("No friends yet")
-                    .font(.headline)
-                    .foregroundStyle(.secondary)
-                Text("Go to the Find Friends tab to add pals!")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .background(Color(.systemBackground))
-        } else {
-            // ---------- Populated list ----------
-            List(friendStore.friends) { friend in
-                HStack {
-                    // Placeholder avatar
-                    Circle().fill(.blue).frame(width: 40, height: 40)
-                    
-                    VStack(alignment: .leading) {
-                        Text(friend.contact.name)
-                        
-                        let badgeIDs = friend.user.unlockIDs.filter { id in
-                            XPSystem().gallery.badges.contains(where: { $0.id == id })
+        Group {
+            if friendStore.friends.isEmpty {
+                VStack(spacing: 12) {
+                    Image(systemName: "person.2.slash")
+                        .font(.largeTitle)
+                        .foregroundStyle(.secondary)
+                    Text("No friends yet")
+                        .font(.headline)
+                        .foregroundStyle(.secondary)
+                    Text("Go to the Find Friends tab to add pals!")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .background(Color(.systemBackground))
+            } else {
+                List(friendStore.friends) { friend in
+                    HStack {
+                        Circle().fill(.blue).frame(width: 40, height: 40)
+                        VStack(alignment: .leading) {
+                            Text(friend.contact.name)
+                            
+                            let badgeIDs = friend.user.unlockIDs.filter { id in
+                                XPSystem().gallery.badges.contains(where: { $0.id == id })
+                            }
+                            let achievementIDs = friend.user.unlockIDs.filter { id in
+                                XPSystem().gallery.achievements.contains(where: { $0.id == id })
+                            }
+                            Text("B \(badgeIDs.count) | A \(achievementIDs.count)")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
                         }
-                        let achievementIDs = friend.user.unlockIDs.filter { id in
-                            XPSystem().gallery.achievements.contains(where: { $0.id == id })
-                        }
-                        Text("B \(badgeIDs.count) | A \(achievementIDs.count)")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
+                        Spacer()
+                        Text("\(friend.user.totalXP) XP").bold()
                     }
-                    
-                    Spacer()
-                    Text("\(friend.user.totalXP) XP").bold()
                 }
             }
+        }
+        .task {
+            await friendStore.loadFriends()
         }
     }
 }
