@@ -160,6 +160,7 @@ struct FriendsView: View {
             .onAppear {
                 fetchContacts { fetched in
                     friends = fetched
+                    
                 }
             }
 

@@ -34,7 +34,7 @@ struct ContentView: View {
     var content: some View {
         NavigationStack {
             VStack {
-                Image("logo")
+                Image("fitpalz_logo")
                     .resizable()
                     .scaledToFit()
                     .frame(width: 330, height: 330)
@@ -47,21 +47,25 @@ struct ContentView: View {
                 
                 TextField("Email", text: $email)
                     .padding()
-                    .textFieldStyle(.plain)
-                    .background(Color(red: 0.1, green: 0.1, blue: 0.1))
+                    .background(Color(red: 0.15, green: 0.15, blue: 0.15))
                     .foregroundColor(.white)
-                    .border(Color(red: 123/255, green: 106/255, blue: 244/255), width: 0.6)
-                    .cornerRadius(2)
-                    .padding(.bottom, 8)
-                    .offset(y: -35)
+                    .cornerRadius(40)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 40)
+                            .strokeBorder(Color(hex: "7b6af4"), lineWidth: 2)
+                    )
+                    .padding(.bottom, 15)
+                    .offset(y: -30)
                 
                 SecureField("Password", text: $password)
                     .padding()
-                    .textFieldStyle(PlainTextFieldStyle())
-                    .background(Color(red: 0.1, green: 0.1, blue: 0.1))
-                    .foregroundColor(.blue)
-                    .border(Color(red: 123/255, green: 106/255, blue: 244/255), width: 0.6)
-                    .cornerRadius(2)
+                    .background(Color(red: 0.15, green: 0.15, blue: 0.15))
+                    .foregroundColor(.white)
+                    .cornerRadius(40)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 40)
+                            .strokeBorder(Color(hex: "7b6af4"), lineWidth: 2)
+                    )
                     .padding(.bottom, 15)
                     .offset(y: -30)
                 
@@ -73,27 +77,32 @@ struct ContentView: View {
                         .offset(y: -25)
                 }
                 
+                
                 Button("Sign In") {
                     login()
                 }
                 .font(.system(size: 24))
                 .padding()
                 .frame(maxWidth: .infinity)
-                .foregroundColor(.blue)
-                .cornerRadius(10)
-                .offset(y: -30)
+                .background(Color(hex: "7b6af4"))
+                .foregroundColor(.white)
+                .cornerRadius(40)
+                .padding(.horizontal, 30)
+                .padding(.top, 10)
+                
+
                 
                 Button("Sign In with Google") {
                     googleSignIn()
                 }
                 .padding()
                 .frame(maxWidth: .infinity)
-                .background(Color(red: 0.48, green: 0.41, blue: 0.95))
+                .background(Color(hex: "7b6af4"))
                 .foregroundColor(.white)
-                .border(Color.gray, width: 2)
-                .cornerRadius(4)
-                .padding(100)
-                .offset(y: -128)
+                .cornerRadius(40)
+                .padding(.horizontal, 30)
+                .padding(.top, 10)
+                
                 
                 NavigationLink("Don't have an account? Sign Up!") {
                     signUpScreen
@@ -104,11 +113,13 @@ struct ContentView: View {
                 .frame(maxWidth: .infinity)
                 .foregroundColor(.blue)
                 .cornerRadius(10)
-                .offset(y: -199)
+                
                 .padding(.horizontal, 20)
                 
                 Spacer()
                     .frame(width: 350)
+
+                
                 
                 // (Email Verification Button)
                 if showVerifyMessage {
@@ -124,7 +135,7 @@ struct ContentView: View {
                     .offset(y: -30)
                 }
             }
-            .background(Color.black)
+            .background(Color(hex: "191919").ignoresSafeArea()) 
             .edgesIgnoringSafeArea(.all)
             .onAppear {
                 Auth.auth().addStateDidChangeListener { auth, user in
@@ -267,31 +278,61 @@ struct SignUpView: View {
                 
                 TextField("First Name", text: $firstName)
                     .padding()
-                    .background(Color(.secondarySystemBackground))
-                    .cornerRadius(8)
-                
+                    .background(Color.gray.opacity(0.2))
+                    .cornerRadius(40)
+                    .foregroundColor(.white)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 40)
+                            .stroke(Color(hex: "7b6af4"), lineWidth: 1)
+                    )
+
                 TextField("Phone Number", text: $phoneNumber)
                     .keyboardType(.phonePad)
                     .padding()
-                    .background(Color(.secondarySystemBackground))
-                    .cornerRadius(8)
-                
+                    .background(Color.gray.opacity(0.2))
+                    .cornerRadius(40)
+                    .foregroundColor(.white)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 40)
+                            .stroke(Color(hex: "7b6af4"), lineWidth: 1)
+                    )
+                    .padding(.bottom, 8)
+
                 TextField("Email", text: $email)
                     .keyboardType(.emailAddress)
                     .autocapitalization(.none)
                     .padding()
-                    .background(Color(.secondarySystemBackground))
-                    .cornerRadius(8)
-                
+                    .background(Color.gray.opacity(0.2))
+                    .cornerRadius(40)
+                    .foregroundColor(.white)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 40)
+                            .stroke(Color(hex: "7b6af4"), lineWidth: 1)
+                    )
+                    .padding(.bottom, 8)
+
                 SecureField("Password", text: $password)
                     .padding()
-                    .background(Color(.secondarySystemBackground))
-                    .cornerRadius(8)
-                
+                    .background(Color.gray.opacity(0.2))
+                    .cornerRadius(40)
+                    .foregroundColor(.white)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 40)
+                            .stroke(Color(hex: "7b6af4"), lineWidth: 1)
+                    )
+                    .padding(.bottom, 8)
+
                 SecureField("Confirm Password", text: $confirmPassword)
                     .padding()
-                    .background(Color(.secondarySystemBackground))
-                    .cornerRadius(8)
+                    .background(Color.gray.opacity(0.2))
+                    .cornerRadius(40)
+                    .foregroundColor(.white)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 40)
+                            .stroke(Color(hex: "7b6af4"), lineWidth: 1)
+                    )
+                    .padding(.bottom, 8)
+
                 
                 if let error = errorMessage {
                     Text(error)
@@ -303,7 +344,7 @@ struct SignUpView: View {
                 }
                 .padding()
                 .frame(maxWidth: .infinity)
-                .background(Color.blue)
+                .background(Color(hex: "7b6af4"))
                 .foregroundColor(.white)
                 .cornerRadius(8)
                 
