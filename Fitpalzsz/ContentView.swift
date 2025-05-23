@@ -125,20 +125,20 @@ struct ContentView: View {
                 
                 
                 // (Email Verification Button)
-                if showVerifyMessage {
-                    Button("Resend Verification Email") {
-                        resendVerificationEmail()
-                    }
-                    .font(.system(size: 20))
-                    .padding()
-                    .frame(maxWidth: .infinity)
-                    .background(Color.red)
-                    .foregroundColor(.white)
-                    .cornerRadius(10)
-                    .offset(y: -30)
-                }
+//                if showVerifyMessage {
+//                    Button("Resend Verification Email") {
+//                        resendVerificationEmail()
+//                    }
+//                    .font(.system(size: 20))
+//                    .padding()
+//                    .frame(maxWidth: .infinity)
+//                    .background(Color.red)
+//                    .foregroundColor(.white)
+//                    .cornerRadius(10)
+//                    .offset(y: -30)
+//                }
             }
-            .background(Color(hex: "191919").ignoresSafeArea()) 
+            .background(Color(hex: "191919").ignoresSafeArea())
             .edgesIgnoringSafeArea(.all)
             .onAppear {
                 Auth.auth().addStateDidChangeListener { auth, user in
@@ -271,6 +271,7 @@ struct SignUpView: View {
     @State private var confirmPassword = ""
     @State private var phoneNumber = ""
     @State private var errorMessage: String?
+    @State private var verificationMessage: String?
     
     var body: some View {
         NavigationStack {
@@ -341,6 +342,11 @@ struct SignUpView: View {
                     Text(error)
                         .foregroundColor(.red)
                 }
+                if let verificationMessage = verificationMessage {
+                                    Text(verificationMessage)
+                                        .foregroundColor(.purple)
+                                        .multilineTextAlignment(.center)
+                                }
                 
                 Button("Sign Up") {
                     signUp()
@@ -373,12 +379,13 @@ struct SignUpView: View {
                 return
             }
             result?.user.sendEmailVerification { error in
-                if let error = error {
-                    print("Failed to send email verification: \(error.localizedDescription)")
-                } else {
-                    print("Verification email sent!")
-                }
-            }
+                            if let error = error {
+                                print("Failed to send email verification: \(error.localizedDescription)")
+                            } else {
+                                print("Verification email sent!")
+                                verificationMessage = "A verification email has been sent to \(result?.user.email ?? "your email"). Please verify before logging in."
+                            }
+                        }
            // saveUserToFirestore()
         }
     }
