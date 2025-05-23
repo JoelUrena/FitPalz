@@ -6,6 +6,7 @@ import Firebase
 import FirebaseCore
 import FirebaseAuth
 import GoogleSignIn
+import AVKit
 
 @main
 struct FitpalzszApp: App {
@@ -20,6 +21,9 @@ struct FitpalzszApp: App {
     private let healthStore: HKHealthStore
     
     @StateObject private var healthkitEngine = HealthkitEngine()
+
+    // Splash‑video flag
+    @State private var showSplash = true
     
     //firebase config
     class AppDelegate: NSObject, UIApplicationDelegate {
@@ -88,8 +92,16 @@ struct FitpalzszApp: App {
     
     var body: some Scene {
         WindowGroup {
-            ContentView()
-                .environmentObject(friendStore).environmentObject(HealthkitEngine.shared)
+            if showSplash {
+                LaunchVideoView {
+                    // dismiss splash when video finishes
+                    showSplash = false
+                }
+            } else {
+                ContentView()
+                    .environmentObject(friendStore)
+                    .environmentObject(HealthkitEngine.shared)
+            }
         }
     }
 }
