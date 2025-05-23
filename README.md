@@ -80,6 +80,12 @@ FitPalz is a gamified fitness tracker designed in Swift using SwiftUI, Firebase,
 * Xcode 15+
 * iOS Simulator or real device (iOS 17+ recommended)
 * Firebase setup (you may skip this step for offline testing)
+* In Xcode -> Signing & Capabilities, make sure HealthKit is enabled
+* Ensure the following keys are present if not already in Info.plist:
+    <key>NSHealthShareUsageDescription</key>
+    <string>This app uses HealthKit to read your health data.</string>
+    <key>NSHealthUpdateUsageDescription</key>
+    <string>This app writes your fitness data to HealthKit.</string>
 
 ### Ἶ0 Build Steps
 
