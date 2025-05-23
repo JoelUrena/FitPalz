@@ -36,18 +36,18 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
-		B31B65EA2D924D8600897EDA /* Fitpalzsz.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Fitpalzsz.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		B31B65FA2D924D8700897EDA /* FitpalzszTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = FitpalzszTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
-		B31B66042D924D8700897EDA /* FitpalzszUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = FitpalzszUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		B31B65EA2D924D8600897EDA /* FitPalz!.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "FitPalz!.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		B31B65FA2D924D8700897EDA /* FitPalz!Tests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "FitPalz!Tests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
+		B31B66042D924D8700897EDA /* FitPalz!UITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "FitPalz!UITests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
-		51DC55DC2D9B36110010E953 /* Exceptions for "Fitpalzsz" folder in "Fitpalzsz" target */ = {
+		51DC55DC2D9B36110010E953 /* Exceptions for "Fitpalzsz" folder in "FitPalz!" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				Info.plist,
 			);
-			target = B31B65E92D924D8600897EDA /* Fitpalzsz */;
+			target = B31B65E92D924D8600897EDA /* FitPalz! */;
 		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
@@ -55,7 +55,7 @@
 		B31B65EC2D924D8600897EDA /* Fitpalzsz */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
-				51DC55DC2D9B36110010E953 /* Exceptions for "Fitpalzsz" folder in "Fitpalzsz" target */,
+				51DC55DC2D9B36110010E953 /* Exceptions for "Fitpalzsz" folder in "FitPalz!" target */,
 			);
 			path = Fitpalzsz;
 			sourceTree = "<group>";
@@ -127,9 +127,9 @@
 		B31B65EB2D924D8600897EDA /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				B31B65EA2D924D8600897EDA /* Fitpalzsz.app */,
-				B31B65FA2D924D8700897EDA /* FitpalzszTests.xctest */,
-				B31B66042D924D8700897EDA /* FitpalzszUITests.xctest */,
+				B31B65EA2D924D8600897EDA /* FitPalz!.app */,
+				B31B65FA2D924D8700897EDA /* FitPalz!Tests.xctest */,
+				B31B66042D924D8700897EDA /* FitPalz!UITests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -137,9 +137,9 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		B31B65E92D924D8600897EDA /* Fitpalzsz */ = {
+		B31B65E92D924D8600897EDA /* FitPalz! */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = B31B660E2D924D8700897EDA /* Build configuration list for PBXNativeTarget "Fitpalzsz" */;
+			buildConfigurationList = B31B660E2D924D8700897EDA /* Build configuration list for PBXNativeTarget "FitPalz!" */;
 			buildPhases = (
 				B31B65E62D924D8600897EDA /* Sources */,
 				B31B65E72D924D8600897EDA /* Frameworks */,
@@ -152,7 +152,7 @@
 			fileSystemSynchronizedGroups = (
 				B31B65EC2D924D8600897EDA /* Fitpalzsz */,
 			);
-			name = Fitpalzsz;
+			name = "FitPalz!";
 			packageProductDependencies = (
 				51DC55C72D9B2FC40010E953 /* FirebaseAnalytics */,
 				51DC55C92D9B2FC40010E953 /* FirebaseAnalyticsOnDeviceConversion */,
@@ -165,12 +165,12 @@
 				51178DCF2DD427E000D979B4 /* FirebaseFirestore */,
 			);
 			productName = Fitpalzsz;
-			productReference = B31B65EA2D924D8600897EDA /* Fitpalzsz.app */;
+			productReference = B31B65EA2D924D8600897EDA /* FitPalz!.app */;
 			productType = "com.apple.product-type.application";
 		};
-		B31B65F92D924D8700897EDA /* FitpalzszTests */ = {
+		B31B65F92D924D8700897EDA /* FitPalz!Tests */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = B31B66112D924D8700897EDA /* Build configuration list for PBXNativeTarget "FitpalzszTests" */;
+			buildConfigurationList = B31B66112D924D8700897EDA /* Build configuration list for PBXNativeTarget "FitPalz!Tests" */;
 			buildPhases = (
 				B31B65F62D924D8700897EDA /* Sources */,
 				B31B65F72D924D8700897EDA /* Frameworks */,
@@ -184,16 +184,16 @@
 			fileSystemSynchronizedGroups = (
 				B31B65FD2D924D8700897EDA /* FitpalzszTests */,
 			);
-			name = FitpalzszTests;
+			name = "FitPalz!Tests";
 			packageProductDependencies = (
 			);
 			productName = FitpalzszTests;
-			productReference = B31B65FA2D924D8700897EDA /* FitpalzszTests.xctest */;
+			productReference = B31B65FA2D924D8700897EDA /* FitPalz!Tests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
 		};
-		B31B66032D924D8700897EDA /* FitpalzszUITests */ = {
+		B31B66032D924D8700897EDA /* FitPalz!UITests */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = B31B66142D924D8700897EDA /* Build configuration list for PBXNativeTarget "FitpalzszUITests" */;
+			buildConfigurationList = B31B66142D924D8700897EDA /* Build configuration list for PBXNativeTarget "FitPalz!UITests" */;
 			buildPhases = (
 				B31B66002D924D8700897EDA /* Sources */,
 				B31B66012D924D8700897EDA /* Frameworks */,
@@ -207,11 +207,11 @@
 			fileSystemSynchronizedGroups = (
 				B31B66072D924D8700897EDA /* FitpalzszUITests */,
 			);
-			name = FitpalzszUITests;
+			name = "FitPalz!UITests";
 			packageProductDependencies = (
 			);
 			productName = FitpalzszUITests;
-			productReference = B31B66042D924D8700897EDA /* FitpalzszUITests.xctest */;
+			productReference = B31B66042D924D8700897EDA /* FitPalz!UITests.xctest */;
 			productType = "com.apple.product-type.bundle.ui-testing";
 		};
 /* End PBXNativeTarget section */
@@ -237,7 +237,7 @@
 					};
 				};
 			};
-			buildConfigurationList = B31B65E52D924D8600897EDA /* Build configuration list for PBXProject "Fitpalzsz" */;
+			buildConfigurationList = B31B65E52D924D8600897EDA /* Build configuration list for PBXProject "FitPalz!" */;
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
@@ -255,9 +255,9 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				B31B65E92D924D8600897EDA /* Fitpalzsz */,
-				B31B65F92D924D8700897EDA /* FitpalzszTests */,
-				B31B66032D924D8700897EDA /* FitpalzszUITests */,
+				B31B65E92D924D8600897EDA /* FitPalz! */,
+				B31B65F92D924D8700897EDA /* FitPalz!Tests */,
+				B31B66032D924D8700897EDA /* FitPalz!UITests */,
 			);
 		};
 /* End PBXProject section */
@@ -313,12 +313,12 @@
 /* Begin PBXTargetDependency section */
 		B31B65FC2D924D8700897EDA /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = B31B65E92D924D8600897EDA /* Fitpalzsz */;
+			target = B31B65E92D924D8600897EDA /* FitPalz! */;
 			targetProxy = B31B65FB2D924D8700897EDA /* PBXContainerItemProxy */;
 		};
 		B31B66062D924D8700897EDA /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = B31B65E92D924D8600897EDA /* Fitpalzsz */;
+			target = B31B65E92D924D8600897EDA /* FitPalz! */;
 			targetProxy = B31B66052D924D8700897EDA /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
@@ -526,7 +526,7 @@
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Fitpalzsz.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Fitpalzsz";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/FitPalz!.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/FitPalz!";
 			};
 			name = Debug;
 		};
@@ -545,7 +545,7 @@
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Fitpalzsz.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Fitpalzsz";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/FitPalz!.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/FitPalz!";
 			};
 			name = Release;
 		};
@@ -586,7 +586,7 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		B31B65E52D924D8600897EDA /* Build configuration list for PBXProject "Fitpalzsz" */ = {
+		B31B65E52D924D8600897EDA /* Build configuration list for PBXProject "FitPalz!" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				B31B660C2D924D8700897EDA /* Debug */,
@@ -595,7 +595,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		B31B660E2D924D8700897EDA /* Build configuration list for PBXNativeTarget "Fitpalzsz" */ = {
+		B31B660E2D924D8700897EDA /* Build configuration list for PBXNativeTarget "FitPalz!" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				B31B660F2D924D8700897EDA /* Debug */,
@@ -604,7 +604,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		B31B66112D924D8700897EDA /* Build configuration list for PBXNativeTarget "FitpalzszTests" */ = {
+		B31B66112D924D8700897EDA /* Build configuration list for PBXNativeTarget "FitPalz!Tests" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				B31B66122D924D8700897EDA /* Debug */,
@@ -613,7 +613,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		B31B66142D924D8700897EDA /* Build configuration list for PBXNativeTarget "FitpalzszUITests" */ = {
+		B31B66142D924D8700897EDA /* Build configuration list for PBXNativeTarget "FitPalz!UITests" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				B31B66152D924D8700897EDA /* Debug */,
