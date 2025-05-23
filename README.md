@@ -88,7 +88,7 @@ FitPalz is a gamified fitness tracker designed in Swift using SwiftUI, Firebase,
 *   string: This app writes your fitness data to HealthKit.
 
 ### Ἶ0 Build Steps
-
+Step 0: Please add the Phone numbers (555) 439-5270, (555) 522-8243, and (555) 602-9293 to your phone or simulator's contacts (through the contacts app). This is necessary to test the "Find Friends Feature." Keep in mind if you are using a simulator, you will not be able to test inviting a friend to fitpalz as SMS messaging is disabled.
 1. Open `Fitpalzsz.xcodeproj` in Xcode.
 2. Select a simulator (e.g., iPhone 15 Pro).
 3. Run the app (Cmd + R).
